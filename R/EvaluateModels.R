@@ -1,11 +1,3 @@
-compareEstimations <- function(PHOModelList, trueEffectList,
-                               FeatureNumber)
-{
-  feature = paste("X", FeatureNumber, sep = "")
-  plot(originalData[,feature], nonLinF[[FeatureNumber]])
-  points(originalData[,feature], predict_Feature(PHOModelList, feature),
-         col = "steelblue")
-}
 compareEstimationsPHOEffect <- function(modelEvalData,
                                         FeatureNumber)
 {
@@ -20,15 +12,43 @@ compareEstimationsPHOEffect <- function(modelEvalData,
                           each = nrow(originalData)))
   ggplot(plotData, aes(x = x, y = y, color = Type)) + geom_line()
 }
+predict_PHO <- function(PHOModelList, data = NULL)
+{
+  if(is.null(data))
+  {
+    data <-
+      ONAM:::prepareData(PHOModelList$data,
+                         PHOModelList$modelInfoList)
+  }
+  modelIdxList <-
+    ONAM:::getModelIdxList(PHOModelList$modelInfoList)
+  sepPredictions <-
+    lapply(PHOModelList$PHOEnsemble,
+           function(PHOModel)
+           {
+             U_Object <-
+               ONAM:::getU(PHOModel$modelList, modelIdxList,
+                           PHOModelList$modelInfoList, data)
+             W <- PHOModel$W_List %>% unlist() %>%
+               matrix(ncol = length(PHOModel$W_List)) %>%
+               rowSums()
+             output <- U_Object$U %*% W
+             return(output)
+           })
+  allPreds <- sepPredictions %>% unlist() %>%
+    matrix(ncol = length(PHOModelList$PHOEnsemble)) %>%
+    rowMeans()
+  return(allPreds)
+}
 evaluateModel <- function(PHOModelList, nonLinF, simSetting,
                           modelRunTime)
 {
   data <- PHOModelList$data
   modelInfoList <- PHOModelList$modelInfoList
   n <- nrow(data)
-  totalPredictions <- PHOModelList %>% predict_PHO()
+  totalPredictions <- PHOModelList %>% ONAM:::predict_PHO()
   separatePredictions <-
-    lapply(PHOModelList$PHOEnsemble, evaluateSingleModel,
+    lapply(PHOModelList$PHOEnsemble, ONAM:::evaluateSingleModel,
            data = data, modelInfoList = modelInfoList)
   predictionsData <-
     data.frame(y = unlist(separatePredictions),
@@ -48,7 +68,8 @@ evaluateModel <- function(PHOModelList, nonLinF, simSetting,
                       predictionList[[1]][[modelIdx]]) %>%
                unlist() %>% matrix(nrow = n) %>% rowMeans()
            })
-  names(totalFeaturePredsPost) <- names(separatePredictions[[1]][[1]])
+  names(totalFeaturePredsPost) <-
+    names(separatePredictions[[1]][[1]])
   totalFeaturePredsPre <-
     lapply(seq_along(separatePredictions[[1]][[1]]),
            function(modelIdx)
@@ -90,8 +111,8 @@ evaluateModel <- function(PHOModelList, nonLinF, simSetting,
 }
 evaluateSingleModel <- function(PHOModel, data, modelInfoList)
 {
-  fitData <- prepareData(data, modelInfoList)
-  modelIdxList <- getModelIdxList(modelInfoList)
+  fitData <- ONAM:::prepareData(data, modelInfoList)
+  modelIdxList <- ONAM:::getModelIdxList(modelInfoList)
   U_Object <-
     getU(PHOModel$modelList, modelIdxList, modelInfoList, fitData)
   subModelPredictions <-
@@ -127,9 +148,9 @@ evaluateModelGeneric <- function(PHOModelList)
   data <- PHOModelList$data
   modelInfoList <- PHOModelList$modelInfoList
   n <- nrow(data)
-  totalPredictions <- PHOModelList %>% predict_PHO()
+  totalPredictions <- PHOModelList %>% ONAM:::predict_PHO()
   separatePredictions <-
-    lapply(PHOModelList$PHOEnsemble, evaluateSingleModel,
+    lapply(PHOModelList$PHOEnsemble, ONAM:::evaluateSingleModel,
            data = data, modelInfoList = modelInfoList)
   predictionsData <-
     data.frame(y = unlist(separatePredictions),
@@ -245,30 +266,6 @@ plotInteractionEffectGenericPre <- function(modelEvalData,
     )
 }
 plotSingleModels <- function(modelEvalData, feature)
-{
-  originalData <- modelEvalData$data
-  n <- nrow(originalData)
-  singlePredictions <- modelEvalData$predictionsData %>%
-    filter(Effect == feature)
-  nEnsemble <- nrow(singlePredictions) / 2 / n
-  singlePredictionsPost <- c()
-  for(i in 1:nEnsemble)
-  {
-    singlePredictionsPost <-
-      c(singlePredictionsPost,
-        singlePredictions[((2 * (i - 1)) * n + 1):((2 * (i - 1) + 1) * n),]$y)
-  }
-  plotData <-
-    data.frame(x = rep(modelEvalData$data[,feature], nEnsemble + 1),
-               y = c(singlePredictionsPost,
-                     modelEvalData$totalFeaturePredsPost[[feature]]),
-               subModel =
-                 as.factor(rep(1:(nEnsemble + 1), each = nrow(originalData))))
-  plot <- ggplot(plotData, aes(x = x, y = y, color = subModel)) + geom_line() +
-    scale_color_manual(values = c(rep("black", nEnsemble), "red"))
-  return(plot)
-}
-plotSingleModels2 <- function(modelEvalData, feature)
 {
   originalData <- modelEvalData$data
   n <- nrow(originalData)

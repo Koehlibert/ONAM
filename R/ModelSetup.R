@@ -9,47 +9,47 @@ getSubModel <- function(inputs, regularizer = NULL)
     #             use_bias = TRUE,
     #             kernel_regularizer = regularizer) %>%
     # # layer_dropout(rate = 0.2) %>%
-    layer_dense(units = 128, activation = "relu",
-                use_bias = TRUE,
-                kernel_regularizer = regularizer) %>%
-    layer_dropout(rate = 0.2) %>%
-    layer_dense(units = 64, activation = "relu",
-                use_bias = TRUE,
-                kernel_regularizer = regularizer,
-                dtype = "float64") %>%
+    keras::layer_dense(units = 128, activation = "relu",
+                       use_bias = TRUE,
+                       kernel_regularizer = regularizer) %>%
+    keras::layer_dropout(rate = 0.2) %>%
+    keras::layer_dense(units = 64, activation = "relu",
+                       use_bias = TRUE,
+                       kernel_regularizer = regularizer,
+                       dtype = "float64") %>%
     # layer_dropout(rate = 0.2) %>%
-    layer_dense(units = 32, activation = "relu",
-                use_bias = TRUE,
-                kernel_regularizer = regularizer,
-                dtype = "float64") %>%
+    keras::layer_dense(units = 32, activation = "relu",
+                       use_bias = TRUE,
+                       kernel_regularizer = regularizer,
+                       dtype = "float64") %>%
     # layer_dropout(rate = 0.2) %>%
-    layer_dense(units = 16, activation = "relu",
-                use_bias = TRUE,
-                kernel_regularizer = regularizer,
-                dtype = "float64") %>%
-    layer_dense(units = 8, activation = "linear",
-                use_bias = TRUE,
-                kernel_regularizer = regularizer,
-                dtype = "float64") %>%
-    layer_dense(units = 1, activation = "linear",
-                use_bias = TRUE)
-  subModel <- keras_model(inputs, outputs)
+    keras::layer_dense(units = 16, activation = "relu",
+                       use_bias = TRUE,
+                       kernel_regularizer = regularizer,
+                       dtype = "float64") %>%
+    keras::layer_dense(units = 8, activation = "linear",
+                       use_bias = TRUE,
+                       kernel_regularizer = regularizer,
+                       dtype = "float64") %>%
+    keras::layer_dense(units = 1, activation = "linear",
+                       use_bias = TRUE)
+  subModel <- keras::keras_model(inputs, outputs)
   return(subModel)
 }
 #Define Linear Model DNN structure
 getLinearSubModel <- function(inputs)
 {
   outputs <- inputs %>%
-    layer_dense(units = 1, activation = "linear",
-                use_bias = FALSE,
-                dtype = "float64")
-  subModel <- keras_model(inputs, outputs)
+    keras::layer_dense(units = 1, activation = "linear",
+                       use_bias = FALSE,
+                       dtype = "float64")
+  subModel <- keras::keras_model(inputs, outputs)
 }
 #Derive Theta from model Formula
 getThetaFromFormula <- function(modelFormula, list_of_deep_models)
 {
   #Separate Symbols
-  thetaList <- lapply(modelFormula, findSymbol)
+  thetaList <- lapply(modelFormula, ONAM:::findSymbol)
   outcomeVar <- thetaList[[2]][[1]]
   partsList <- list()
   while(length(thetaList) > 0)
@@ -81,8 +81,9 @@ getThetaFromFormula <- function(modelFormula, list_of_deep_models)
                           unlist())])) %>% unlist() %>% unique()
   interOrder <- lapply(partsList, function(item) length(item) - 1) %>% unlist()
   highestOrder <- max(interOrder)
-  orderedPartsList <- partsList[(1:length(partsList))[order(interOrder,
-                                                            decreasing = TRUE)]]
+  orderedPartsList <-
+    partsList[(1:length(partsList))[order(interOrder,
+                                          decreasing = TRUE)]]
   orderCounts <- table(interOrder)
   orderCounts <- orderCounts[order(as.numeric(names(orderCounts)),
                                    decreasing = TRUE)]
@@ -130,18 +131,18 @@ findSymbol <- function(currList)
   return(lapply(currList, function(item) if(is.symbol(item)) item else findSymbol(item)))
 }
 remove_element <- function(lst, indices)
-  {
+{
   if (length(indices) == 1) {
     lst[[indices]] <- NULL
   } else {
-    lst[[indices[1]]] <- remove_element(lst[[indices[1]]], indices[-1])
+    lst[[indices[1]]] <- ONAM:::remove_element(lst[[indices[1]]], indices[-1])
   }
   return(lst)
 }
 remove_string_recursive <- function(lst, remove_str)
-  {
+{
   if (is.list(lst)) {
-    lst <- lapply(lst, function(x) remove_string_recursive(x, remove_str))
+    lst <- lapply(lst, function(x) ONAM:::remove_string_recursive(x, remove_str))
     lst <- lapply(lst, function(sublist) Filter(function(item) {
       is.symbol(item) || !item %in% as.name(strings_to_remove)
     }, sublist))
@@ -152,9 +153,9 @@ remove_string_recursive <- function(lst, remove_str)
 }
 createModel <- function(modelInfoList, list_of_deep_models)
 {
-  inputsList <- createInputs(modelInfoList)
-  modelList <- createModels(modelInfoList, inputsList, list_of_deep_models)
-  wholeModel <- compileModel(inputsList, modelList)
+  inputsList <- ONAM:::createInputs(modelInfoList)
+  modelList <- ONAM:::createModels(modelInfoList, inputsList, list_of_deep_models)
+  wholeModel <- ONAM:::compileModel(inputsList, modelList)
   return(list(model = wholeModel,
               modelList = modelList))
 }
@@ -162,7 +163,7 @@ createInputs <- function(modelInfoList)
 {
   if(length(modelInfoList$theta$Linear) > 0)
     linInputs <- lapply(1:length(modelInfoList$theta$Linear),
-                        function(x) layer_input(shape = 1))
+                        function(x) keras::layer_input(shape = 1))
   else
     linInputs <- NULL
   deepInputs <-
@@ -170,10 +171,11 @@ createInputs <- function(modelInfoList)
                                                 "Linear")]),
            function(interCountIdx)
            {
-             nInputs <- as.numeric(names(modelInfoList$theta)[interCountIdx])
+             nInputs <-
+               as.numeric(names(modelInfoList$theta)[interCountIdx])
              subInputList <-
                lapply(1:length(modelInfoList$theta[[interCountIdx]]),
-                      function(tmp) layer_input(shape = nInputs))
+                      function(tmp) keras::layer_input(shape = nInputs))
            })
   names(deepInputs) <-
     names(modelInfoList$theta[setdiff(names(modelInfoList$theta),
@@ -183,10 +185,12 @@ createInputs <- function(modelInfoList)
 }
 createModels <- function(modelInfoList, inputsList, list_of_deep_models)
 {
-  linModels <- lapply(inputsList$Additive, getLinearSubModel)
+  linModels <- lapply(inputsList$Additive,
+                      ONAM:::getLinearSubModel)
   deepModels <- list()
-  for(p_idx in names(modelInfoList$theta[setdiff(names(modelInfoList$theta),
-                                                 "Linear")]))
+  for(p_idx in
+      names(modelInfoList$theta[setdiff(names(modelInfoList$theta),
+                                        "Linear")]))
   {
     deepModels[[p_idx]] <-
       lapply(seq_along(modelInfoList$modelNames[[p_idx]]),
@@ -202,30 +206,35 @@ createModels <- function(modelInfoList, inputsList, list_of_deep_models)
 }
 concatenate_ModelList <- function(modelList, bias = FALSE)
 {
-  tmpOutput <- layer_concatenate(lapply(modelList,
-                                        function(model) model$output)) %>%
-    layer_dense(1, use_bias = bias, trainable = FALSE)
+  tmpOutput <-
+    keras::layer_concatenate(lapply(modelList,
+                                    function(model) model$output)) %>%
+    keras::layer_dense(1, use_bias = bias, trainable = FALSE)
   tmpWeights <- tmpOutput$node$layer$get_weights()
   tmpWeights[[1]] <- matrix(rep(1, length(modelList)),
-                                 ncol = 1)
+                            ncol = 1)
   if(bias) tmpWeights[[2]] <- tmpWeights[[2]] - tmpWeights[[2]]
-  tmpOutput$node$layer %>% set_weights(tmpWeights)
+  tmpOutput$node$layer %>% keras::set_weights(tmpWeights)
   return(tmpOutput)
 }
 compileModel <- function(inputsList, modelList)
 {
   subModels <- unlist(modelList, use.names = FALSE) #Why does this matter?
   all_inputs <- unlist(inputsList, use.names = FALSE)
-  wholeModel <- subModels %>% concatenate_ModelList(bias = TRUE)
-  wholeModel <- keras_model(all_inputs, wholeModel)
-  wholeModel <- wholeModel %>% compile(loss = loss_mean_squared_error(),
-                                       optimizer = optimizer_adam())
+  wholeModel <- subModels %>%
+    ONAM:::concatenate_ModelList(bias = TRUE)
+  wholeModel <- keras::keras_model(all_inputs, wholeModel)
+  wholeModel <- wholeModel %>%
+    keras::compile(loss = keras::loss_mean_squared_error(),
+                   optimizer = keras::optimizer_adam())
   return(wholeModel)
 }
 prepareData <- function(originalData, modelInfoList)
 {
-  additiveData <- lapply(modelInfoList$theta$Linear, function(featureName)
-    originalData[,as.character(featureName)])
+  additiveData <-
+    lapply(modelInfoList$theta$Linear,
+           function(featureName)
+             originalData[,as.character(featureName)])
   deepData <-
     lapply(unlist(modelInfoList$theta[setdiff(names(modelInfoList$theta),
                                               "Linear")], recursive = FALSE),
@@ -248,41 +257,4 @@ getDataDictionary <- function(modelInfoList)
     }
   }
   return(dictionaryList)
-}
-getSubModel_big <- function(inputs, regularizer = NULL)
-{
-  outputs <- inputs %>%
-    # layer_dense(units = 512, activation = "relu",
-    #             use_bias = TRUE) %>%
-    # layer_dropout(rate = 0.2) %>%
-    # layer_dense(units = 512, activation = "relu",
-    #             use_bias = TRUE,
-    #             kernel_regularizer = regularizer) %>%
-    # layer_dropout(rate = 0.2) %>%
-    layer_dense(units = 256, activation = "relu",
-                use_bias = TRUE,
-                kernel_regularizer = regularizer) %>%
-    layer_dropout(rate = 0.2) %>%
-    layer_dense(units = 128, activation = "relu",
-                use_bias = TRUE,
-                kernel_regularizer = regularizer,
-                dtype = "float64") %>%
-    layer_dropout(rate = 0.2) %>%
-    layer_dense(units = 64, activation = "relu",
-                use_bias = TRUE,
-                kernel_regularizer = regularizer,
-                dtype = "float64") %>%
-    # layer_dropout(rate = 0.2) %>%
-    layer_dense(units = 32, activation = "relu",
-                use_bias = TRUE,
-                kernel_regularizer = regularizer,
-                dtype = "float64") %>%
-    layer_dense(units = 16, activation = "linear",
-                use_bias = TRUE,
-                kernel_regularizer = regularizer,
-                dtype = "float64") %>%
-    layer_dense(units = 1, activation = "linear",
-                use_bias = TRUE)
-  subModel <- keras_model(inputs, outputs)
-  return(subModel)
 }
