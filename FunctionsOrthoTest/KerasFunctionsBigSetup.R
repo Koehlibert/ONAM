@@ -64,27 +64,27 @@ getThetaFromFormula <- function(modelFormula, list_of_deep_models)
     partsList <- c(partsList, list(tmpItem))
     thetaList[[idxToRemove]] <- NULL
   }
-  signIdx <- which(lapply(partsList, function(item) 
+  signIdx <- which(lapply(partsList, function(item)
     all(lapply(item, function(subItem) subItem == as.name("+") |
                  subItem == as.name("~") | subItem == as.name(outcomeVar)) %>%
           unlist())) %>% unlist())
   partsList[signIdx] <- NULL
   additiveCompsIdx <- which(lapply(partsList, function(item)
-    any(lapply(item, function(subItem) subItem == as.name("+")) %>% 
+    any(lapply(item, function(subItem) subItem == as.name("+")) %>%
           unlist()) | length(item) == 1) %>% unlist())
   LongAdditiveComps <- partsList[additiveCompsIdx]
   partsList[additiveCompsIdx] <- NULL
   additiveComps <- lapply(LongAdditiveComps, function(item)
-    if(length(item) == 1) return(item) else 
-      return(item[which(lapply(item, 
-                               function(subItem) subItem != as.name("+")) %>% 
+    if(length(item) == 1) return(item) else
+      return(item[which(lapply(item,
+                               function(subItem) subItem != as.name("+")) %>%
                           unlist())])) %>% unlist() %>% unique()
   interOrder <- lapply(partsList, function(item) length(item) - 1) %>% unlist()
   highestOrder <- max(interOrder)
-  orderedPartsList <- partsList[(1:length(partsList))[order(interOrder, 
+  orderedPartsList <- partsList[(1:length(partsList))[order(interOrder,
                                                             decreasing = TRUE)]]
   orderCounts <- table(interOrder)
-  orderCounts <- orderCounts[order(as.numeric(names(orderCounts)), 
+  orderCounts <- orderCounts[order(as.numeric(names(orderCounts)),
                                    decreasing = TRUE)]
   countIndex <- list()
   start_index <- 1
@@ -99,11 +99,11 @@ getThetaFromFormula <- function(modelFormula, list_of_deep_models)
     orderedPartsList[countIndex[[countIdx]]])
   namesIdx <- lapply(seq_along(thetaDeepWithName), function(itemIdx)
     lapply(seq_along(thetaDeepWithName[[itemIdx]]), function(innerItemIdx)
-      lapply(seq_along(thetaDeepWithName[[itemIdx]][[innerItemIdx]]), 
-             function(innerInnerItemIdx) 
-               if(as.character(thetaDeepWithName[[itemIdx]][[innerItemIdx]][[innerInnerItemIdx]]) %in% 
-                  names(list_of_deep_models)) 
-                 return(c(itemIdx, innerItemIdx, innerInnerItemIdx))))) %>% 
+      lapply(seq_along(thetaDeepWithName[[itemIdx]][[innerItemIdx]]),
+             function(innerInnerItemIdx)
+               if(as.character(thetaDeepWithName[[itemIdx]][[innerItemIdx]][[innerInnerItemIdx]]) %in%
+                  names(list_of_deep_models))
+                 return(c(itemIdx, innerItemIdx, innerInnerItemIdx))))) %>%
     unlist() %>% split(rep(1:(length(.)/3), each = 3))
   thetaDeep <- thetaDeepWithName
   modelList <- list()
@@ -129,7 +129,7 @@ findSymbol <- function(currList)
 {
   return(lapply(currList, function(item) if(is.symbol(item)) item else findSymbol(item)))
 }
-remove_element <- function(lst, indices) 
+remove_element <- function(lst, indices)
   {
   if (length(indices) == 1) {
     lst[[indices]] <- NULL
@@ -138,7 +138,7 @@ remove_element <- function(lst, indices)
   }
   return(lst)
 }
-remove_string_recursive <- function(lst, remove_str) 
+remove_string_recursive <- function(lst, remove_str)
   {
   if (is.list(lst)) {
     lst <- lapply(lst, function(x) remove_string_recursive(x, remove_str))
@@ -161,21 +161,21 @@ createModel <- function(modelInfoList, list_of_deep_models)
 createInputs <- function(modelInfoList)
 {
   if(length(modelInfoList$theta$Linear) > 0)
-    linInputs <- lapply(1:length(modelInfoList$theta$Linear), 
+    linInputs <- lapply(1:length(modelInfoList$theta$Linear),
                         function(x) layer_input(shape = 1))
   else
     linInputs <- NULL
-  deepInputs <- 
+  deepInputs <-
     lapply(1:length(modelInfoList$theta[setdiff(names(modelInfoList$theta),
-                                                "Linear")]), 
+                                                "Linear")]),
            function(interCountIdx)
            {
              nInputs <- as.numeric(names(modelInfoList$theta)[interCountIdx])
-             subInputList <- 
+             subInputList <-
                lapply(1:length(modelInfoList$theta[[interCountIdx]]),
                       function(tmp) layer_input(shape = nInputs))
            })
-  names(deepInputs) <- 
+  names(deepInputs) <-
     names(modelInfoList$theta[setdiff(names(modelInfoList$theta),
                                       "Linear")])
   return(list(Deep = deepInputs,
@@ -188,9 +188,9 @@ createModels <- function(modelInfoList, inputsList, list_of_deep_models)
   for(p_idx in names(modelInfoList$theta[setdiff(names(modelInfoList$theta),
                                                  "Linear")]))
   {
-    deepModels[[p_idx]] <- 
+    deepModels[[p_idx]] <-
       lapply(seq_along(modelInfoList$modelNames[[p_idx]]),
-             function(modelIdx) 
+             function(modelIdx)
              {
                modelName <- modelInfoList$modelNames[[p_idx]][[modelIdx]]
                return(list_of_deep_models[[modelName]](inputsList$Deep[[p_idx]][[modelIdx]]))
@@ -202,11 +202,11 @@ createModels <- function(modelInfoList, inputsList, list_of_deep_models)
 }
 concatenate_ModelList <- function(modelList, bias = FALSE)
 {
-  tmpOutput <- layer_concatenate(lapply(modelList, 
+  tmpOutput <- layer_concatenate(lapply(modelList,
                                         function(model) model$output)) %>%
     layer_dense(1, use_bias = bias, trainable = FALSE)
   tmpWeights <- tmpOutput$node$layer$get_weights()
-  tmpWeights[[1]] <- matrix(rep(1, length(modelList)), 
+  tmpWeights[[1]] <- matrix(rep(1, length(modelList)),
                                  ncol = 1)
   if(bias) tmpWeights[[2]] <- tmpWeights[[2]] - tmpWeights[[2]]
   tmpOutput$node$layer %>% set_weights(tmpWeights)
@@ -226,7 +226,7 @@ prepareData <- function(originalData, modelInfoList)
 {
   additiveData <- lapply(modelInfoList$theta$Linear, function(featureName)
     originalData[,as.character(featureName)])
-  deepData <- 
+  deepData <-
     lapply(unlist(modelInfoList$theta[setdiff(names(modelInfoList$theta),
                                               "Linear")], recursive = FALSE),
            function(subTheta) originalData[,as.character(unlist(subTheta))])
@@ -248,4 +248,41 @@ getDataDictionary <- function(modelInfoList)
     }
   }
   return(dictionaryList)
+}
+getSubModel_big <- function(inputs, regularizer = NULL)
+{
+  outputs <- inputs %>%
+    # layer_dense(units = 512, activation = "relu",
+    #             use_bias = TRUE) %>%
+    # layer_dropout(rate = 0.2) %>%
+    # layer_dense(units = 512, activation = "relu",
+    #             use_bias = TRUE,
+    #             kernel_regularizer = regularizer) %>%
+    # layer_dropout(rate = 0.2) %>%
+    layer_dense(units = 256, activation = "relu",
+                use_bias = TRUE,
+                kernel_regularizer = regularizer) %>%
+    layer_dropout(rate = 0.2) %>%
+    layer_dense(units = 128, activation = "relu",
+                use_bias = TRUE,
+                kernel_regularizer = regularizer,
+                dtype = "float64") %>%
+    layer_dropout(rate = 0.2) %>%
+    layer_dense(units = 64, activation = "relu",
+                use_bias = TRUE,
+                kernel_regularizer = regularizer,
+                dtype = "float64") %>%
+    # layer_dropout(rate = 0.2) %>%
+    layer_dense(units = 32, activation = "relu",
+                use_bias = TRUE,
+                kernel_regularizer = regularizer,
+                dtype = "float64") %>%
+    layer_dense(units = 16, activation = "linear",
+                use_bias = TRUE,
+                kernel_regularizer = regularizer,
+                dtype = "float64") %>%
+    layer_dense(units = 1, activation = "linear",
+                use_bias = TRUE)
+  subModel <- keras_model(inputs, outputs)
+  return(subModel)
 }

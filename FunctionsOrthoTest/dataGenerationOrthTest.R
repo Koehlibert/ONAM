@@ -1,31 +1,34 @@
-purifyNonLinFunction <- function(idx)
+purifyNonLinFunction <- function(idx, lotf, nonLinFIdx, X)
 {
   x <- X[,idx]
-  lmod <- lm(y ~ 1 + x, data = data.frame(y = lotf[[nonLinFIdx[idx]]](x), 
+  lmod <- lm(y ~ 1 + x, data = data.frame(y = lotf[[nonLinFIdx[idx]]](x),
                                           x = x))
   nonLinF <- function(x) lotf[[nonLinFIdx[idx]]](x) - lmod$coefficients[1] -
     x * lmod$coefficients[2]
-  scaleFac <- max(abs(nonLinF(x)))
+  # scaleFac <- AUC(x, nonLinF(x))
+  x <- scale(x)
+  y <- nonLinF(x)
+  scaleFac <- sum(diff(x) * (abs(y[-1]) + abs(y[-length(y)])) / 2)
   return(function(x) nonLinF(x) / scaleFac)
 }
-purifyInterFunction <- function(idx)
+purifyInterFunction <- function(idx, interf, interFIdx, X)
 {
   relData <- X[,combn(1:p_inf, 2)[,idx]]
   x1 <- relData[,1]
   x2 <- relData[,2]
-  lmod <- lm(y ~ 1 + x1 + x2, 
-             data = data.frame(y = interf[[interFIdx[idx]]](x1, x2), 
+  lmod <- lm(y ~ 1 + x1 + x2,
+             data = data.frame(y = interf[[interFIdx[idx]]](x1, x2),
                                x1 = x1,
                                x2 = x2))
-  interF <- function(x1, x2) interf[[interFIdx[idx]]](x1, x2) - 
-    lmod$coefficients[1] - 
+  interF <- function(x1, x2) interf[[interFIdx[idx]]](x1, x2) -
+    lmod$coefficients[1] -
     x1 * lmod$coefficients[2] - x2 * lmod$coefficients[3]
   scaleFac <- max(abs(interF(x1, x2)))
   return(function(x1, x2) interF(x1, x2) / scaleFac)
 }
 stackedOrthFunction <- function(nonLinFPre, interFPre, r, originalData)
 {
-  DesMatList <- 
+  DesMatList <-
     lapply(seq_along(nonLinFPre),
            function(idx)
            {
@@ -33,7 +36,7 @@ stackedOrthFunction <- function(nonLinFPre, interFPre, r, originalData)
            })
   DesMat <- matrix(unlist(DesMatList), ncol = length(DesMatList))
   DesMat <- cbind(DesMat, originalData)
-  IntMatList <- 
+  IntMatList <-
     lapply(seq_along(interFPre),
            function(idx)
            {
@@ -63,10 +66,10 @@ stackedOrthFunction <- function(nonLinFPre, interFPre, r, originalData)
                     function(x)
                       mean(PHOIntMat2[,idx][which((x - tmpData)^2 < r)]))}
     ) %>% unlist() %>% matrix(ncol = 3)
-  nonLinF <- 
+  nonLinF <-
     lapply(seq_along(nonLinFPre),
            function(idx) smoothPHODesMat[,idx])
-  interF <- 
+  interF <-
     lapply(seq_along(interFPre),
            function(idx) PHOIntMat[,idx])
   return(list(nonLinF = nonLinF,
