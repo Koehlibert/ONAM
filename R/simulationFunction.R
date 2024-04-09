@@ -48,16 +48,17 @@ runSimulation <- function(idx)
   #purify effects to get only nonlinear part#####
   interFPre <- lapply(1:n_inter, function(i)
   {
-    purifyInterFunction(i, interf = interf,
-                        interFIdx = interFIdx, X = X)
+    ONAM:::purifyInterFunction(i, interf = interf,
+                               interFIdx = interFIdx, X = X)
   })
   nonLinFPre <- lapply(1:p_inf, function(i)
   {
-    purifyNonLinFunction(i, lotf = lotf, nonLinFIdx = nonLinFIdx,
-                         X = X)
+    ONAM:::purifyNonLinFunction(i, lotf = lotf, nonLinFIdx = nonLinFIdx,
+                                X = X)
   })
-  PHOList <- stackedOrthFunction(nonLinFPre, interFPre, 0.1,
-                                 originalData)
+  PHOList <-
+    ONAM:::stackedOrthFunction(nonLinFPre, interFPre, 0.1,
+                               originalData)
   nonLinF <- PHOList$nonLinF
   interF <- PHOList$interF
   # trueBetas <- betas + PHOList$b
@@ -79,27 +80,19 @@ runSimulation <- function(idx)
   }
   originalData <- cbind(originalData, Y)
   colnames(originalData) <- c(paste("X", 1:p, sep = ""), "Y")
-  # trueBetas <- lm(Y ~ 0 + X)$coefficients
-  # trueFcts <- c(lapply(1:p, function(x) return(function(y) y * trueBetas[x])),
-  #               nonLinF,
-  #               interF)
-  #Define model####
-  # modelFormula <-
-  #   formula(Y ~ X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 +
-  #             deep_model1(X1) + deep_model1(X2) + deep_model1(X3) +
-  #             deep_model1(X1, X2) + deep_model1(X1, X3) + deep_model1(X2, X3) +
-  #             deep_model1(X1, X2, X3, X4, X5, X6, X7, X8, X9, X10))
   modelFormula <-
     formula(Y ~ deep_model1(X1) + deep_model1(X2) + deep_model1(X3) +
               deep_model1(X1, X2) + deep_model1(X1, X3) + deep_model1(X2, X3) +
               deep_model1(X1, X2, X3, X4, X5, X6, X7, X8, X9, X10))
   list_of_deep_models = list(deep_model1 = getSubModel)
   modelRunTime <-
-    system.time({modelRes <- fitPHOModel(modelFormula, list_of_deep_models,
-                                         originalData, 10)})
-  modelEvalData <- evaluateModel(modelRes, nonLinF,
-                                 simSetting[iSetting,],
-                                 modelRunTime)
+    system.time({modelRes <-
+      ONAM:::fitPHOModel(modelFormula, list_of_deep_models,
+                         originalData, 10)})
+  modelEvalData <-
+    ONAM:::evaluateModel(modelRes, nonLinF,
+                         simSetting[iSetting,],
+                         modelRunTime)
   #resFileName <- paste(SettingString, "_run_", j, ".RDS", sep = "")
   #saveRDS(modelEvalData, file = resFileName)
   return(modelEvalData)
