@@ -2,7 +2,7 @@
 #' Get submodel until penultimate layer
 getIntermediateModel <- function(model, layerIdx = length(model$layers) - 1)
 {
-  deep_part_in <- model %>% keras::get_layer(index = as.integer(layerIdx))
+  deep_part_in <- keras::get_layer(model, index = as.integer(layerIdx))
   intermediate_mod <- keras::keras_model(model$input,
                                          deep_part_in$output)
   return(intermediate_mod)

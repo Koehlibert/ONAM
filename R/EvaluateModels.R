@@ -143,6 +143,7 @@ evaluateSingleModel <- function(PHOModel, data, modelInfoList)
   return(list(subModelPredictions = subModelPredictions,
               subModelPredictionsOld = subModelPredictionsOld))
 }
+#' @export
 evaluateModelGeneric <- function(PHOModelList)
 {
   data <- PHOModelList$data
@@ -159,8 +160,9 @@ evaluateModelGeneric <- function(PHOModelList)
                          each = 2 * n),
                      length(separatePredictions)),
                PHO = rep(rep(c("After", "Before"),
-                             each = n * length(separatePredictions[[1]][[1]])),
-                         length(separatePredictions)))
+                             each = n),
+                         length(separatePredictions) *
+                           length(separatePredictions[[1]][[1]])))
   totalFeaturePredsPost <-
     lapply(seq_along(separatePredictions[[1]][[1]]),
            function(modelIdx)
@@ -187,6 +189,7 @@ evaluateModelGeneric <- function(PHOModelList)
               totalFeaturePredsPost = totalFeaturePredsPost,
               totalFeaturePredsPre = totalFeaturePredsPre))
 }
+#' @export
 compareEstimationsPHOEffectGeneric <- function(modelEvalData,
                                                feature)
 {
@@ -199,6 +202,7 @@ compareEstimationsPHOEffectGeneric <- function(modelEvalData,
                           each = nrow(originalData)))
   ggplot(plotData, aes(x = x, y = y, color = Type)) + geom_line()
 }
+#' @export
 plotEffectGenericPost <- function(modelEvalData,
                                   feature)
 {
@@ -208,6 +212,7 @@ plotEffectGenericPost <- function(modelEvalData,
                y = modelEvalData$totalFeaturePredsPost[[feature]])
   ggplot(plotData, aes(x = x, y = y)) + geom_line()
 }
+#' @export
 plotEffectGenericPre <- function(modelEvalData,
                                  feature)
 {
@@ -217,6 +222,7 @@ plotEffectGenericPre <- function(modelEvalData,
                y = modelEvalData$totalFeaturePredsPre[[feature]])
   ggplot(plotData, aes(x = x, y = y)) + geom_line()
 }
+#' @export
 plotInteractionEffectGenericPost <- function(modelEvalData,
                                              feature1, feature2)
 {
@@ -241,6 +247,7 @@ plotInteractionEffectGenericPost <- function(modelEvalData,
                                      max(plotData$Prediction))
     )
 }
+#' @export
 plotInteractionEffectGenericPre <- function(modelEvalData,
                                             feature1, feature2)
 {
@@ -265,6 +272,7 @@ plotInteractionEffectGenericPre <- function(modelEvalData,
                                      max(plotData$Prediction))
     )
 }
+#' @export
 plotSingleModels <- function(modelEvalData, feature)
 {
   originalData <- modelEvalData$data
@@ -282,4 +290,14 @@ plotSingleModels <- function(modelEvalData, feature)
   plot <- ggplot(plotData, aes(x = x, y = y, color = subModel)) + geom_line() +
     scale_color_manual(values = c(rep("black", nEnsemble), "red"))
   return(plot)
+}
+#' @export
+getVarDecomp <- function(modelEvalData)
+{
+  n <- length(modelEvalData$totalPredictions)
+  effectNames <- unique(modelEvalData$predictionsData$Effect)
+  nEnsemble <- modelEvalData$predictionsData %>%
+    filter(Effect == effectNames[1]) %>%
+    filter(PHO == "After") %>% nrow() / n
+  varData <- data.frame(names = effectNames,)
 }
