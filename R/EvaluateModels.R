@@ -54,11 +54,12 @@ evaluateModel <- function(PHOModelList, nonLinF, simSetting,
     data.frame(y = unlist(separatePredictions),
                Effect =
                  rep(rep(names(separatePredictions[[1]][[1]]),
-                         each = 2 * n),
-                     length(separatePredictions)),
+                         each = n),
+                     2 * length(separatePredictions)),
                PHO = rep(rep(c("After", "Before"),
-                             each = n * length(separatePredictions[[1]][[1]])),
-                         length(separatePredictions)))
+                             each = n),
+                         length(separatePredictions) *
+                           length(separatePredictions[[1]][[1]])))
   totalFeaturePredsPost <-
     lapply(seq_along(separatePredictions[[1]][[1]]),
            function(modelIdx)
@@ -157,12 +158,12 @@ evaluateModelGeneric <- function(PHOModelList)
     data.frame(y = unlist(separatePredictions),
                Effect =
                  rep(rep(names(separatePredictions[[1]][[1]]),
-                         each = 2 * n),
-                     length(separatePredictions)),
+                         each = n),
+                     2 * length(separatePredictions)),
                PHO = rep(rep(c("After", "Before"),
-                             each = n),
-                         length(separatePredictions) *
-                           length(separatePredictions[[1]][[1]])))
+                             each = n *
+                               length(separatePredictions[[1]][[1]])),
+                         length(separatePredictions) ))
   totalFeaturePredsPost <-
     lapply(seq_along(separatePredictions[[1]][[1]]),
            function(modelIdx)
@@ -280,7 +281,7 @@ plotSingleModels <- function(modelEvalData, feature)
   singlePredictions <- modelEvalData$predictionsData %>%
     filter(Effect == feature, PHO == "After") %>%
     select(y) %>% unlist()
-  nEnsemble <- nrow(singlePredictions) / n
+  nEnsemble <- length(singlePredictions) / n
   plotData <-
     data.frame(x = rep(modelEvalData$data[,feature], nEnsemble + 1),
                y = c(c(singlePredictions),
@@ -299,5 +300,42 @@ getVarDecomp <- function(modelEvalData)
   nEnsemble <- modelEvalData$predictionsData %>%
     filter(Effect == effectNames[1]) %>%
     filter(PHO == "After") %>% nrow() / n
-  varData <- data.frame(names = effectNames,)
+  varMatrix <- matrix(0,
+                      nrow = length(effectNames),
+                      ncol = length(effectNames))
+  tmpData <- modelEvalData$predictionsData %>%
+    filter(PHO == "After") %>%
+    mutate(model = rep(1:nEnsemble,
+                       each = n * length(effectNames)),
+           obs = rep(1:n, nEnsemble * length(effectNames))) %>%
+    select(-PHO)
+  for(modelIdx in 1:nEnsemble)
+  {
+    relData <- tmpData %>%
+      filter(model == modelIdx) %>%
+      select(-model) %>%
+      tidyr::pivot_wider(id_cols = obs,
+                         names_from = Effect,
+                         values_from = y) %>%
+      select(-obs)
+    tmpVar <- var(relData)
+    relVarMatrix <- abs(tmpVar) / sum(abs(tmpVar))
+    varMatrix <- varMatrix + relVarMatrix
+  }
+  # effectModelVar <- modelEvalData$predictionsData %>%
+  #   filter(PHO == "After") %>%
+  #   mutate(model = rep(1:nEnsemble,
+  #                      each = n * length(effectNames)),
+  #                      ) %>%
+  #   group_by(Effect, model) %>%
+  #   summarise(variance = var(y))
+  # totalVar <- effectModelVar %>%
+  #   group_by(model) %>%
+  #   summarise(totalVar = sum(abs(variance)))
+  # varPercentage <- effectModelVar %>%
+  #   left_join(totalVar, by = "model") %>%
+  #   mutate(variancePercentage = abs(variance) / totalVar)
+  # varDecomposition <- varPercentage %>%
+  #   group_by(Effect) %>%
+  #   summarise(test = sum(variancePercentage)/nEnsemble)
 }

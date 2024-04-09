@@ -3,6 +3,7 @@
 export(compareEstimationsPHOEffectGeneric)
 export(evaluateModelGeneric)
 export(fitPHOModel)
+export(getVarDecomp)
 export(plotEffectGenericPost)
 export(plotEffectGenericPre)
 export(plotInteractionEffectGenericPost)

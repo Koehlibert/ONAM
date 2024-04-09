@@ -1,9 +1,6 @@
 #Initial Setup####
 rm(list = ls())
 gc()
-# setwd("//imbie-fs/Projekte/Biostatistik/Projekte_Koehler/Deepregression/Keras Stacked Orthogonalization LA//")
-# setwd("Z:/Biostatistik/Projekte_Koehler/Deepregression/Keras Stacked Orthogonalization LA//")
-source("FunctionsOrthoTest//KerasFunctionsSource.R")
 set.seed(1)
 #Hyperparameters####
 nSim <- 10
@@ -38,11 +35,10 @@ interf <- list(function(x1, x2) x1 * (-x2),
                function(x1, x2) sqrt(x1^2 + x2^2),
                function(x1, x2) cos(x1) * x2^3,
                function(x1, x2) exp(0.5*x1) + sqrt(abs(x2-1)),
-               function(x1, x2) sqrt((x1 - 2)^2 + (x2 + 1) ^2)
-)
+               function(x1, x2) sqrt((x1 - 2)^2 + (x2 + 1) ^2))
 #Run Simulation####
 # for(iSetting in 1:nrow(simSetting))
-for(iSetting in 21:nrow(simSetting))
+for(iSetting in 26:nrow(simSetting))
 {
   #Simulation setting####
   n <- simSetting[iSetting, 1]
@@ -54,10 +50,14 @@ for(iSetting in 21:nrow(simSetting))
                          "_sd_", noisesd, sep = "")
   for(j in 1:nSim)
   {
+    if(iSetting == 26 & j < 6)
+    {
+      break
+    }
     progressPercent <- ((iSetting - 1)*nSim + j)/
-    (nrow(simSetting) * nSim)*100
+      (nrow(simSetting) * nSim)*100
     # progressPercent <- ((iSetting - 1)*nSim + j)/
-      # (3 * nSim)*100
+    # (3 * nSim)*100
     cat('\r',paste0(progressPercent, "% complete"))
     flush.console()
     #create data####
@@ -66,16 +66,17 @@ for(iSetting in 21:nrow(simSetting))
     #purify effects to get only nonlinear part#####
     interFPre <- lapply(1:n_inter, function(i)
     {
-      purifyInterFunction(i, interf = interf,
-                          interFIdx = interFIdx, X = X)
+      ONAM:::purifyInterFunction(i, interf = interf,
+                                 interFIdx = interFIdx, X = X)
     })
     nonLinFPre <- lapply(1:p_inf, function(i)
     {
-      purifyNonLinFunction(i, lotf = lotf, nonLinFIdx = nonLinFIdx,
-                           X = X)
+      ONAM:::purifyNonLinFunction(i, lotf = lotf, nonLinFIdx = nonLinFIdx,
+                                  X = X)
     })
-    PHOList <- stackedOrthFunction(nonLinFPre, interFPre, 0.1,
-                                   originalData)
+    PHOList <-
+      ONAM:::stackedOrthFunction(nonLinFPre, interFPre, 0.1,
+                                 originalData)
     nonLinF <- PHOList$nonLinF
     interF <- PHOList$interF
     # trueBetas <- betas + PHOList$b
@@ -101,13 +102,15 @@ for(iSetting in 21:nrow(simSetting))
       formula(Y ~ deep_model1(X1) + deep_model1(X2) + deep_model1(X3) +
                 deep_model1(X1, X2) + deep_model1(X1, X3) + deep_model1(X2, X3) +
                 deep_model1(X1, X2, X3, X4, X5, X6, X7, X8, X9, X10))
-    list_of_deep_models = list(deep_model1 = getSubModel)
+    list_of_deep_models = list(deep_model1 = ONAM:::getSubModel)
     modelRunTime <-
-      system.time({modelRes <- fitPHOModel(modelFormula, list_of_deep_models,
-                                           originalData, 10)})
-    modelEvalData <- evaluateModel(modelRes, nonLinF,
-                                   simSetting[iSetting,],
-                                   modelRunTime)
+      system.time({modelRes <-
+        ONAM:::fitPHOModel(modelFormula, list_of_deep_models,
+                           originalData, 10)})
+    modelEvalData <-
+      ONAM:::evaluateModel(modelRes, nonLinF,
+                           simSetting[iSetting,],
+                           modelRunTime)
     resFileName <- paste("./UniformFeatureResults/", SettingString, "_run_", j, ".RDS", sep = "")
     saveRDS(modelEvalData, file = resFileName)
   }
