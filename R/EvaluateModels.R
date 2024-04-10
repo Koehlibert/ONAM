@@ -46,20 +46,23 @@ evaluateModel <- function(PHOModelList, nonLinF, simSetting,
   data <- PHOModelList$data
   modelInfoList <- PHOModelList$modelInfoList
   n <- nrow(data)
-  totalPredictions <- PHOModelList %>% ONAM:::predict_PHO()
+  nEnsemble <- length(PHOModelList$PHOEnsemble)
   separatePredictions <-
     lapply(PHOModelList$PHOEnsemble, ONAM:::evaluateSingleModel,
            data = data, modelInfoList = modelInfoList)
+  effectNames <- names(separatePredictions[[1]][[1]])
+  nEffects <- length(effectNames)
   predictionsData <-
     data.frame(y = unlist(separatePredictions),
                Effect =
-                 rep(rep(names(separatePredictions[[1]][[1]]),
+                 rep(rep(effectNames,
                          each = n),
-                     2 * length(separatePredictions)),
+                     2 * nEnsemble),
                PHO = rep(rep(c("After", "Before"),
-                             each = n),
-                         length(separatePredictions) *
-                           length(separatePredictions[[1]][[1]])))
+                             each = n * nEffects),
+                         nEnsemble),
+               Observation = rep(1:n, nEffects * 2 * nEnsemble),
+               Model = rep(1:nEnsemble, each = n * 2 * nEffects))
   totalFeaturePredsPost <-
     lapply(seq_along(separatePredictions[[1]][[1]]),
            function(modelIdx)
@@ -240,9 +243,9 @@ plotInteractionEffectGenericPost <- function(modelEvalData,
     geom_point(size = 0.75) +
     scale_color_gradientn(colors = c("red", "yellow", "green"),
                           values =
-                            rescale(c(min(plotData$Prediction),
-                                      mean(plotData$Prediction),
-                                      max(plotData$Prediction))),
+                            scales::rescale(c(min(plotData$Prediction),
+                                              mean(plotData$Prediction),
+                                              max(plotData$Prediction))),
                           guide = "colorbar",
                           limits = c(min(plotData$Prediction),
                                      max(plotData$Prediction))

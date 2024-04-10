@@ -15,4 +15,5 @@ Imports:
     stringr,
     keras,
     tensorflow,
-    ggplot2
+    ggplot2,
+    scales
