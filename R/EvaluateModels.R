@@ -64,26 +64,35 @@ evaluateModel <- function(PHOModelList, nonLinF, simSetting,
                Observation = rep(1:n, nEffects * 2 * nEnsemble),
                Model = rep(1:nEnsemble, each = n * 2 * nEffects))
   totalFeaturePredsPost <-
-    lapply(seq_along(separatePredictions[[1]][[1]]),
-           function(modelIdx)
+    lapply(effectNames,
+           function(effect)
            {
-             lapply(separatePredictions,
-                    function(predictionList)
-                      predictionList[[1]][[modelIdx]]) %>%
-               unlist() %>% matrix(nrow = n) %>% rowMeans()
+             predictionsData %>%
+               filter(PHO == "After", Effect == effect) %>%
+               group_by(Observation) %>%
+               summarise(totalEffect = mean(y)) %>%
+               select(totalEffect) %>% unlist()
            })
   names(totalFeaturePredsPost) <-
-    names(separatePredictions[[1]][[1]])
+    effectNames
+  totalPredictions <-
+    predictionsData %>%
+    filter(PHO == "After") %>%
+    group_by(Observation) %>%
+    summarise(Prediction = sum(y)/nEnsemble) %>%
+    select(Prediction) %>% unlist()
   totalFeaturePredsPre <-
-    lapply(seq_along(separatePredictions[[1]][[1]]),
-           function(modelIdx)
+    lapply(effectNames,
+           function(effect)
            {
-             lapply(separatePredictions,
-                    function(predictionList)
-                      predictionList[[2]][[modelIdx]]) %>%
-               unlist() %>% matrix(nrow = n) %>% rowMeans()
+             predictionsData %>%
+               filter(PHO == "Pre", Effect == effect) %>%
+               group_by(Observation) %>%
+               summarise(totalEffect = mean(y)) %>%
+               select(totalEffect) %>% unlist()
            })
-  names(totalFeaturePredsPre) <- names(separatePredictions[[1]][[1]])
+  names(totalFeaturePredsPre) <-
+    effectNames
   FeatureNames <- c("X1", "X2", "X3")
   effectErrorsPost <-
     lapply(seq_along(FeatureNames),
@@ -153,40 +162,53 @@ evaluateModelGeneric <- function(PHOModelList)
   data <- PHOModelList$data
   modelInfoList <- PHOModelList$modelInfoList
   n <- nrow(data)
-  totalPredictions <- PHOModelList %>% ONAM:::predict_PHO()
+  nEnsemble <- length(PHOModelList$PHOEnsemble)
   separatePredictions <-
     lapply(PHOModelList$PHOEnsemble, ONAM:::evaluateSingleModel,
            data = data, modelInfoList = modelInfoList)
+  effectNames <- names(separatePredictions[[1]][[1]])
+  nEffects <- length(effectNames)
   predictionsData <-
     data.frame(y = unlist(separatePredictions),
                Effect =
-                 rep(rep(names(separatePredictions[[1]][[1]]),
+                 rep(rep(effectNames,
                          each = n),
-                     2 * length(separatePredictions)),
+                     2 * nEnsemble),
                PHO = rep(rep(c("After", "Before"),
-                             each = n *
-                               length(separatePredictions[[1]][[1]])),
-                         length(separatePredictions) ))
+                             each = n * nEffects),
+                         nEnsemble),
+               Observation = rep(1:n, nEffects * 2 * nEnsemble),
+               Model = rep(1:nEnsemble, each = n * 2 * nEffects))
   totalFeaturePredsPost <-
-    lapply(seq_along(separatePredictions[[1]][[1]]),
-           function(modelIdx)
+    lapply(effectNames,
+           function(effect)
            {
-             lapply(separatePredictions,
-                    function(predictionList)
-                      predictionList[[1]][[modelIdx]]) %>%
-               unlist() %>% matrix(nrow = n) %>% rowMeans()
+             predictionsData %>%
+               filter(PHO == "After", Effect == effect) %>%
+               group_by(Observation) %>%
+               summarise(totalEffect = mean(y)) %>%
+               select(totalEffect) %>% unlist()
            })
-  names(totalFeaturePredsPost) <- names(separatePredictions[[1]][[1]])
+  names(totalFeaturePredsPost) <-
+    effectNames
+  totalPredictions <-
+    predictionsData %>%
+    filter(PHO == "After") %>%
+    group_by(Observation) %>%
+    summarise(Prediction = sum(y)/nEnsemble) %>%
+    select(Prediction) %>% unlist()
   totalFeaturePredsPre <-
-    lapply(seq_along(separatePredictions[[1]][[1]]),
-           function(modelIdx)
+    lapply(effectNames,
+           function(effect)
            {
-             lapply(separatePredictions,
-                    function(predictionList)
-                      predictionList[[2]][[modelIdx]]) %>%
-               unlist() %>% matrix(nrow = n) %>% rowMeans()
+             predictionsData %>%
+               filter(PHO == "Pre", Effect == effect) %>%
+               group_by(Observation) %>%
+               summarise(totalEffect = mean(y)) %>%
+               select(totalEffect) %>% unlist()
            })
-  names(totalFeaturePredsPre) <- names(separatePredictions[[1]][[1]])
+  names(totalFeaturePredsPre) <-
+    effectNames
   return(list(data = data,
               totalPredictions = totalPredictions,
               predictionsData = predictionsData,
@@ -291,8 +313,35 @@ plotSingleModels <- function(modelEvalData, feature)
                      modelEvalData$totalFeaturePredsPost[[feature]]),
                subModel =
                  as.factor(rep(1:(nEnsemble + 1), each = n)))
-  plot <- ggplot(plotData, aes(x = x, y = y, color = subModel)) + geom_line() +
-    scale_color_manual(values = c(rep("black", nEnsemble), "red"))
+  tmpX <- plotData$x[1:n]
+  xGrid <- seq(min(tmpX),
+               max(tmpX),
+               length.out = 101)
+  xDens <- sapply(1:100,
+                  function(idx)
+                    sum(tmpX > xGrid[idx - 1] &
+                          tmpX < xGrid[idx]))
+  rectData <- data.frame(xStart = xGrid[1:100],
+                         xEnd = xGrid[2:101],
+                         alpha = xDens,
+                         x = (xGrid[1:100] - xGrid[2:101]) / 2,
+                         w = diff(xGrid))
+  plot <- ggplot(plotData, aes(x = x, y = y, alpha = subModel)) +
+    geom_line(color = "blue") +
+    scale_alpha_manual(values = c(rep(0.125, nEnsemble), 1)) +
+    theme_bw() + theme(legend.position = "none") +
+    # geom_rect(data =rectData,
+    #           mapping = aes(xmin = xStart,
+    #                         xmax = xEnd,
+    #                         ymin = -Inf,
+    #                         ymax = Inf,
+    #                         alpha = alpha),
+    #           show.legend = FALSE) +
+    # geom_rug(sides = "b", alpha = 0.05,
+    #          linetype = 1,
+    #          linewidth = 0.25) +
+    xlab(feature) +
+    ylab("Effect")
   return(plot)
 }
 #' @export
@@ -308,19 +357,16 @@ getVarDecomp <- function(modelEvalData)
                       ncol = length(effectNames))
   tmpData <- modelEvalData$predictionsData %>%
     filter(PHO == "After") %>%
-    mutate(model = rep(1:nEnsemble,
-                       each = n * length(effectNames)),
-           obs = rep(1:n, nEnsemble * length(effectNames))) %>%
     select(-PHO)
   for(modelIdx in 1:nEnsemble)
   {
     relData <- tmpData %>%
-      filter(model == modelIdx) %>%
-      select(-model) %>%
-      tidyr::pivot_wider(id_cols = obs,
+      filter(Model == modelIdx) %>%
+      select(-Model) %>%
+      tidyr::pivot_wider(id_cols = Observation,
                          names_from = Effect,
                          values_from = y) %>%
-      select(-obs)
+      select(-Observation)
     tmpVar <- var(relData)
     relVarMatrix <- abs(tmpVar) / sum(abs(tmpVar))
     varMatrix <- varMatrix + relVarMatrix
