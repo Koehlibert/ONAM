@@ -38,7 +38,7 @@ interf <- list(function(x1, x2) x1 * (-x2),
                function(x1, x2) sqrt((x1 - 2)^2 + (x2 + 1) ^2))
 #Run Simulation####
 # for(iSetting in 1:nrow(simSetting))
-for(iSetting in 26:nrow(simSetting))
+for(iSetting in 1:nrow(simSetting))
 {
   #Simulation setting####
   n <- simSetting[iSetting, 1]
@@ -50,10 +50,10 @@ for(iSetting in 26:nrow(simSetting))
                          "_sd_", noisesd, sep = "")
   for(j in 1:nSim)
   {
-    if(iSetting == 26 & j < 6)
-    {
-      break
-    }
+    # if(iSetting == 26 & j < 6)
+    # {
+    #   break
+    # }
     progressPercent <- ((iSetting - 1)*nSim + j)/
       (nrow(simSetting) * nSim)*100
     # progressPercent <- ((iSetting - 1)*nSim + j)/
@@ -108,9 +108,7 @@ for(iSetting in 26:nrow(simSetting))
         ONAM:::fitPHOModel(modelFormula, list_of_deep_models,
                            originalData, 10)})
     modelEvalData <-
-      ONAM:::evaluateModel(modelRes, nonLinF,
-                           simSetting[iSetting,],
-                           modelRunTime)
+      ONAM:::evaluateModelGeneric(modelRes)
     resFileName <- paste("./UniformFeatureResults/", SettingString, "_run_", j, ".RDS", sep = "")
     saveRDS(modelEvalData, file = resFileName)
   }

@@ -64,6 +64,41 @@ getU <- function(modelList, modelIdxList, modelInfoList, data)
                   U_IndicesList = U_IndicesList)
   return(retList)
 }
+getU_Post <- function(modelEvalData, modelIdxList, modelInfoList)
+{
+  dataDictionary <- ONAM:::getDataDictionary(modelInfoList)
+
+  U_List <-
+    lapply(seq_along(modelIdxList),
+           function(idx)
+           {
+             input <- modelList[[modelIdxList[[idx]]]] %>%
+               ONAM:::getIntermediateModel() %>%
+               predict(data[[dataDictionary[[modelIdxList[[idx]]]]]],
+                       verbose = 0)
+             if(modelList[[modelIdxList[[1]]]]$output$node$layer$get_config()$use_bias)
+               input <- cbind(input, 1)
+             return(input)
+           })
+  U_Dims <-
+    lapply(seq_along(U_List),
+           function(modelIdx)
+             ncol(U_List[[modelIdx]]))
+  U <- unlist(U_List) %>%
+    matrix(ncol =
+             sum(U_Dims %>% unlist()))
+  U <- cbind(U, 1)
+  U_IndicesList <- list(1:U_Dims[[1]])
+  for(idx in seq_along(U_Dims)[-1])
+  {
+    lastIdx <- U_IndicesList[[idx - 1]][U_Dims[[idx - 1]]]
+    U_IndicesList[[idx]] <- (lastIdx + 1):(lastIdx + U_Dims[[idx]])
+  }
+  retList <- list(U = U,
+                  U_Dims = U_Dims,
+                  U_IndicesList = U_IndicesList)
+  return(retList)
+}
 getW_List <- function(modelList, modelIdxList, modelInfoList, U_IndicesList)
 {
   W_List_Sep <- lapply(seq_along(modelIdxList),
@@ -214,5 +249,78 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
   PHOModelList <- list(PHOEnsemble = PHOEnsemble,
                        modelInfoList = modelInfoList,
                        data = data)
-  return(PHOModelList)
+  modelEvalData <-
+    ONAM:::evaluateModelGenericPre(PHOModelList)
+  finalW <- ONAM:::finalPHO(modelEvalData, modelInfoList)
+  returnList <- c(PHOModelList, finalW = list(finalW))
+  return(returnList)
+}
+finalPHO <- function(modelEvalData, modelInfoList)
+{
+  nEnsemble <- max(modelEvalData$predictionsData$Model)
+  data <- modelEvalData$data
+  n <- nrow(data)
+  modelIdxList <- ONAM:::getModelIdxList(modelInfoList)
+  modelOrder <-
+    lapply(modelIdxList,
+           function(modelIdx)
+             modelIdx[1]) %>% unlist()
+  nModels <- length(modelOrder)
+  U <- unlist(modelEvalData$totalFeaturePredsPost) %>%
+    matrix(nrow = n)
+  W <- diag(1, nrow = nModels)
+  #Iterate over interaction depth
+  for(orthoIdx in 2:(length(modelInfoList$theta) -
+                     is.null(modelInfoList$theta$Linear)))
+  {
+    lowerOrderIdxList <- which(modelOrder >= orthoIdx)
+    tmpU <- U
+    tmpU[,-lowerOrderIdxList] <- 0
+    H <- crossprod(tmpU)
+    qrRes <- qr(H)
+    H_order <- qrRes$pivot[1:qrRes$rank]
+    Pivot <- ONAM:::solveSingularMatrix(tmpU, H_order)
+    tmpUReduced <- tmpU[,Pivot]
+    tmpInverse <- solve(t(tmpUReduced) %*% tmpUReduced)
+    higherOrderIdxList <- which(modelOrder == (orthoIdx - 1))
+    outputsList <-
+      lapply(higherOrderIdxList,
+             function(higherOrderIdx)
+             {
+               return(U %*% W[, higherOrderIdx])
+             })
+    ZList <-
+      lapply(outputsList,
+             function(outputs)
+             {
+               tmpZ <- tmpInverse %*% t(tmpUReduced) %*% outputs
+               Z <- rep(0, nModels)
+               Z[Pivot] <- tmpZ
+               return(Z)
+             })
+    for(higherOrderIdx in seq_along(higherOrderIdxList))
+    {
+      modelIdx <- higherOrderIdxList[[higherOrderIdx]]
+      W[, modelIdx] <-
+        W[, modelIdx] -
+        ZList[[higherOrderIdx]]
+    }
+    for(lowerOrderIdx in lowerOrderIdxList)
+    {
+      tmpWeightUpdate <- 0
+      for(higherOrderIdx in seq_along(higherOrderIdxList))
+      {
+        tmpWeightUpdate <-
+          tmpWeightUpdate +
+          ZList[[higherOrderIdx]][lowerOrderIdx]
+      }
+      W[lowerOrderIdx, lowerOrderIdx] <-
+        W[lowerOrderIdx, lowerOrderIdx] + tmpWeightUpdate
+    }
+  }
+  finalOutputs <-
+    U %*% W
+  colnames(finalOutputs) <-
+    names(modelEvalData$totalFeaturePredsPost)
+  return(W)
 }
