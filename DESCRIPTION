@@ -16,4 +16,5 @@ Imports:
     keras,
     tensorflow,
     ggplot2,
-    scales
+    scales,
+    mgcv

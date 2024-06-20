@@ -64,41 +64,6 @@ getU <- function(modelList, modelIdxList, modelInfoList, data)
                   U_IndicesList = U_IndicesList)
   return(retList)
 }
-getU_Post <- function(modelEvalData, modelIdxList, modelInfoList)
-{
-  dataDictionary <- ONAM:::getDataDictionary(modelInfoList)
-
-  U_List <-
-    lapply(seq_along(modelIdxList),
-           function(idx)
-           {
-             input <- modelList[[modelIdxList[[idx]]]] %>%
-               ONAM:::getIntermediateModel() %>%
-               predict(data[[dataDictionary[[modelIdxList[[idx]]]]]],
-                       verbose = 0)
-             if(modelList[[modelIdxList[[1]]]]$output$node$layer$get_config()$use_bias)
-               input <- cbind(input, 1)
-             return(input)
-           })
-  U_Dims <-
-    lapply(seq_along(U_List),
-           function(modelIdx)
-             ncol(U_List[[modelIdx]]))
-  U <- unlist(U_List) %>%
-    matrix(ncol =
-             sum(U_Dims %>% unlist()))
-  U <- cbind(U, 1)
-  U_IndicesList <- list(1:U_Dims[[1]])
-  for(idx in seq_along(U_Dims)[-1])
-  {
-    lastIdx <- U_IndicesList[[idx - 1]][U_Dims[[idx - 1]]]
-    U_IndicesList[[idx]] <- (lastIdx + 1):(lastIdx + U_Dims[[idx]])
-  }
-  retList <- list(U = U,
-                  U_Dims = U_Dims,
-                  U_IndicesList = U_IndicesList)
-  return(retList)
-}
 getW_List <- function(modelList, modelIdxList, modelInfoList, U_IndicesList)
 {
   W_List_Sep <- lapply(seq_along(modelIdxList),
@@ -216,7 +181,7 @@ PHO <- function(modelList, modelInfoList, data)
 #' @export
 fitPHOModel <- function(modelFormula, list_of_deep_models,
                         data, nEnsemble = 20,
-                        progresstext = FALSE)
+                        progresstext = FALSE, verbose = 0)
 {
   modelInfoList <-
     ONAM:::getThetaFromFormula(modelFormula, list_of_deep_models)
@@ -241,7 +206,7 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
                                     patience = 10)
     history <- wholeModel %>%
       keras::fit(fitData, Y, epochs = 500, callbacks = callback,
-                                         verbose = 0)
+                                         verbose = verbose)
     #Orthogonalize####
     PHOEnsemble[[i]] <-
       ONAM:::PHO(modelList, modelInfoList, fitData)
@@ -251,8 +216,11 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
                        data = data)
   modelEvalData <-
     ONAM:::evaluateModelGenericPre(PHOModelList)
-  finalW <- ONAM:::finalPHO(modelEvalData, modelInfoList)
-  returnList <- c(PHOModelList, finalW = list(finalW))
+  finalPHOList <- ONAM:::finalPHO(modelEvalData, modelInfoList)
+  finalW <- finalPHOList[[1]]
+  finalOutputs <- finalPHOList[[2]]
+  returnList <- c(PHOModelList, finalW = list(finalW),
+                  finalOutputs = list(finalOutputs))
   return(returnList)
 }
 finalPHO <- function(modelEvalData, modelInfoList)
@@ -322,5 +290,5 @@ finalPHO <- function(modelEvalData, modelInfoList)
     U %*% W
   colnames(finalOutputs) <-
     names(modelEvalData$totalFeaturePredsPost)
-  return(W)
+  return(list(W, finalOutputs))
 }
