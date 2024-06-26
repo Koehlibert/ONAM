@@ -89,7 +89,6 @@ getW_List <- function(modelList, modelIdxList, modelInfoList, U_IndicesList)
 PHO <- function(modelList, modelInfoList, data)
 {
   modelIdxList <- ONAM:::getModelIdxList(modelInfoList)
-  #Initialize model intercept
   U_Object <-
     ONAM:::getU(modelList, modelIdxList, modelInfoList, data)
   W_List <-

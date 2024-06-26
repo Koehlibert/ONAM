@@ -146,11 +146,19 @@ for(iOuter in 1:3)
                          y = tmpRes$finalTotalPredictions[,"X2_X3"],
                          ensembleIdx = j))
     }
-    trueFileName <- paste("./ONAM/UniformFeatureResults_New/", (iSetting + 1) %/% 2,
+    # trueFileName <- paste("./ONAM/UniformFeatureResults_New/", (iSetting + 1) %/% 2,
+    #                       "_TRUE.RDS", sep = "")
+    SettingString <- paste("n_", n, "_Eff_",
+                           paste(nonLinFIdx, collapse = "_"),
+                           sep = "")
+    trueFileName <- paste("./ONAM/UniformFeatureResults_New/", SettingString,
                           "_TRUE.RDS", sep = "")
     trueData <- readRDS(trueFileName)
-    tmp_true_data_main1 <- data.frame(x = trueData[[nSim + 1]][,1],
-                                      y = trueData[[nSim + 1]][,18],
+    # tmp_true_data_main1 <- data.frame(x = trueData[[nSim + 1]][,1],
+    #                                   y = trueData[[nSim + 1]][,18],
+    #                                   ensembleIdx = "True")
+    tmp_true_data_main1 <- data.frame(x = trueData[,1],
+                                      y = trueData[,4],
                                       ensembleIdx = "True")
     tmp_plot_data_main1 <- tmp_plot_data_main1 %>%
       mutate(ensembleIdx = factor(ensembleIdx))
@@ -159,8 +167,11 @@ for(iOuter in 1:3)
       mutate(ensembleIdx = "Mean")
     tmp_plot_data_main1 <- rbind(tmp_plot_data_main1, mean_plot_data_main1,
                                  tmp_true_data_main1)
-    tmp_true_data_main2 <- data.frame(x = trueData[[nSim + 1]][,2],
-                                      y = trueData[[nSim + 1]][,17],
+    # tmp_true_data_main2 <- data.frame(x = trueData[[nSim + 1]][,2],
+    #                                   y = trueData[[nSim + 1]][,17],
+    #                                   ensembleIdx = "True")
+    tmp_true_data_main2 <- data.frame(x = trueData[,2],
+                                      y = trueData[,5],
                                       ensembleIdx = "True")
     tmp_plot_data_main2 <- tmp_plot_data_main2 %>%
       mutate(ensembleIdx = factor(ensembleIdx))
@@ -169,8 +180,11 @@ for(iOuter in 1:3)
       mutate(ensembleIdx = "Mean")
     tmp_plot_data_main2 <- rbind(tmp_plot_data_main2, mean_plot_data_main2,
                                  tmp_true_data_main2)
-    tmp_true_data_main3 <- data.frame(x = trueData[[nSim + 1]][,3],
-                                      y = trueData[[nSim + 1]][,16],
+    # tmp_true_data_main3 <- data.frame(x = trueData[[nSim + 1]][,3],
+    #                                   y = trueData[[nSim + 1]][,16],
+    #                                   ensembleIdx = "True")
+    tmp_true_data_main3 <- data.frame(x = trueData[,3],
+                                      y = trueData[,6],
                                       ensembleIdx = "True")
     tmp_plot_data_main3 <- tmp_plot_data_main3 %>%
       mutate(ensembleIdx = factor(ensembleIdx))
@@ -238,10 +252,14 @@ for(iOuter in 1:3)
       ylab(TeX("$f_{3}(X_{3})$"))
     plot_data_inter1_mean <-
       get_average_data_inter(tmp_plot_data_inter1)
+    # tmp_true_data_inter1 <-
+    #   data.frame(x1 = trueData[[nSim + 1]][,1],
+    #              x2 = trueData[[nSim + 1]][,2],
+    #              y = trueData[[nSim + 1]][,15])
     tmp_true_data_inter1 <-
-      data.frame(x1 = trueData[[nSim + 1]][,1],
-                 x2 = trueData[[nSim + 1]][,2],
-                 y = trueData[[nSim + 1]][,15])
+      data.frame(x1 = trueData[,1],
+                 x2 = trueData[,2],
+                 y = trueData[,7])
     plot_data_inter1_true <-
       get_average_data_inter(tmp_true_data_inter1)
     yMin1 <- min(plot_data_inter1_mean$Prediction, plot_data_inter1_true$Prediction)
@@ -272,10 +290,14 @@ for(iOuter in 1:3)
       ylab(TeX("$X_{2}$"))
     plot_data_inter2_mean <-
       get_average_data_inter(tmp_plot_data_inter2)
+    # tmp_true_data_inter2 <-
+    #   data.frame(x1 = trueData[[nSim + 1]][,1],
+    #              x2 = trueData[[nSim + 1]][,3],
+    #              y = trueData[[nSim + 1]][,14])
     tmp_true_data_inter2 <-
-      data.frame(x1 = trueData[[nSim + 1]][,1],
-                 x2 = trueData[[nSim + 1]][,3],
-                 y = trueData[[nSim + 1]][,14])
+      data.frame(x1 = trueData[,1],
+                 x2 = trueData[,3],
+                 y = trueData[,8])
     plot_data_inter2_true <-
       get_average_data_inter(tmp_true_data_inter2)
     yMin2 <- min(plot_data_inter2_mean$Prediction, plot_data_inter2_true$Prediction)
@@ -306,10 +328,14 @@ for(iOuter in 1:3)
       ylab(TeX("$X_{3}$"))
     plot_data_inter3_mean <-
       get_average_data_inter(tmp_plot_data_inter3)
+    # tmp_true_data_inter3 <-
+    #   data.frame(x1 = trueData[[nSim + 1]][,2],
+    #              x2 = trueData[[nSim + 1]][,3],
+    #              y = trueData[[nSim + 1]][,13])
     tmp_true_data_inter3 <-
-      data.frame(x1 = trueData[[nSim + 1]][,2],
-                 x2 = trueData[[nSim + 1]][,3],
-                 y = trueData[[nSim + 1]][,13])
+      data.frame(x1 = trueData[,2],
+                 x2 = trueData[,3],
+                 y = trueData[,9])
     plot_data_inter3_true <-
       get_average_data_inter(tmp_true_data_inter3)
     yMin3 <- min(plot_data_inter3_mean$Prediction, plot_data_inter3_true$Prediction)
