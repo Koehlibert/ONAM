@@ -4,6 +4,7 @@ library(MASS)
 library(dplyr)
 setwd("//imbie-fs/Projekte/Biostatistik/Projekte_Koehler/Deepregression/ONAM/")
 source("SimulationSettings.R")
+n_big <- 20000
 n_sim <- 10
 p <- 10
 n_inter <- 3
@@ -91,16 +92,38 @@ for(iSetting in 1:3)
 {
   nonLinFIdx <- 3 * (iSetting - 1) + 1:3
   interFIdx <- 3 * (iSetting - 1) + 1:3
-  Z <- mvrnorm(50000, mu = mu_vec, Sigma = Sigma)
+  Z <- mvrnorm(n_big, mu = mu_vec, Sigma = Sigma)
   X <- (pnorm(Z) - 0.5) * 6
   Y <- 0
-  for(i in 1:3)
+  interFPre <- lapply(1:n_inter, function(i)
   {
-    Y <- Y + lotf[[nonLinFIdx[i]]](X[,i]) +
-      interf[[interFIdx[i]]](X[,combn(1:p_inf, 2)[1,i]],
-                             X[,combn(1:p_inf, 2)[2,i]])
+    function(x1, x2) interf[[interFIdx[i]]](x1, x2) #/ sqrt(interFVars[interFIdx[i]])
+    # ONAM:::purifyInterFunction(i, interf = interf,
+    #                            interFIdx = interFIdx, X = X_Big)
+  })
+  nonLinFPre <- lapply(1:p_inf, function(i)
+  {
+    function(x) lotf[[nonLinFIdx[i]]](x) #/ sqrt(lotFVars[interFIdx[i]])
+    # ONAM:::purifyNonLinFunction(i, lotf = lotf, nonLinFIdx = nonLinFIdx,
+    #                             X = X_Big)
+  })
+  PHOList <-
+    ONAM:::stackedOrthFunction(nonLinFPre, interFPre, 0.1,
+                               X, globalTerm)
+  nonLinF <- lapply(1:p_inf, function(i) PHOList$nonLinF[[i]])
+  interF <- lapply(1:n_inter, function(i) PHOList$interF[[i]])
+  globalF <- PHOList$globalF
+  Y <- rep(0, n_big)
+  # Y <- X %*% trueBetas
+  for(idx in 1:p_inf)
+  {
+    Y <- Y + nonLinF[[idx]]
   }
-  Y <- Y + apply(X, 1, globalTerm)
+  for(idx in 1:n_inter)
+  {
+    Y <- Y + interF[[idx]]
+  }
+  Y <- Y + globalF
   originalData <- cbind(X, Y)
   colnames(originalData) <- c(paste("X", 1:p, sep = ""), "Y")
   modelFormula <-
@@ -116,6 +139,9 @@ for(iSetting in 1:3)
                          originalData, 5, progresstext = TRUE,
                          verbose = 1)})
   trainDataList <- list()
+  modelEvalData <-
+    ONAM:::evaluateModelSimulation(modelRes, originalData, Y)
+  # effectVars <- diag(var(modelEvalData$finalTotalPredictions))
   for (i_sim in 1:n_sim)
   {
     trainDataList[[i_sim]] <- list()
@@ -128,8 +154,6 @@ for(iSetting in 1:3)
       trainDataList[[i_sim]][[as.character(n_val)]] <- Train_Data
     }
   }
-  modelEvalData <-
-    ONAM:::evaluateModelSimulation(modelRes, originalData, Y)
   trueDF <- cbind(originalData, modelEvalData$finalTotalPredictions)
   trainDataList[[n_sim + 1]] <- trueDF
   trueFileName <- paste("./UniformFeatureResults_New/", iSetting,

@@ -38,63 +38,17 @@ varEstimations <- readRDS("varEstimations.rds")
 #Model regularization####
 
 #Run Simulation####
-# for(iSetting in 1:nrow(simSetting))
-for(iSetting in 5:nrow(simSetting))
+for(iSetting in 1:nrow(simSetting))
+# for(iSetting in 5:nrow(simSetting))
 {
   #Simulation setting####
   n <- simSetting[iSetting, 1]
   nonLinFIdx <- 3 * (simSetting[iSetting, 2] - 1) + 1:3
   interFIdx <- 3 * (simSetting[iSetting, 2] - 1) + 1:3
-  sigmaMat <- matrix(0.5, nrow = p, ncol = p)
-  diag(sigmaMat) <- 1
-  X_tmp <- mvrnorm(n_Big, rep(0, p), sigmaMat)
-  X_Big <-
-    apply(X_tmp, 2,
-          function(x) pnorm(x) * 6 - 3)
-  colnames(X_Big) <- paste("X", 1:p, sep = "")
-  #purify effects to get only nonlinear part#####
-  interFPre <- lapply(1:n_inter, function(i)
-  {
-    function(x1, x2) interf[[interFIdx[i]]](x1, x2) #/ sqrt(interFVars[interFIdx[i]])
-    # ONAM:::purifyInterFunction(i, interf = interf,
-    #                            interFIdx = interFIdx, X = X_Big)
-  })
-  nonLinFPre <- lapply(1:p_inf, function(i)
-  {
-    function(x) lotf[[nonLinFIdx[i]]](x) #/ sqrt(lotFVars[interFIdx[i]])
-    # ONAM:::purifyNonLinFunction(i, lotf = lotf, nonLinFIdx = nonLinFIdx,
-    #                             X = X_Big)
-  })
-  PHOList <-
-    ONAM:::stackedOrthFunction(nonLinFPre, interFPre, 0.1,
-                               X_Big, globalTerm)
-  nonLinF <- lapply(1:p_inf,
-                    function(i)
-                      scale(PHOList$nonLinF[[i]] /
-                              sqrt(varEstimations[nonLinFIdx[i]]), scale = FALSE))
-  interF <- lapply(1:n_inter,
-                   function(i)
-                     scale(PHOList$interF[[i]] /
-                             sqrt(varEstimations[9 + interFIdx[i]]), scale = FALSE))
-  globalF <- scale(PHOList$globalF / sqrt(varEstimations[19 + iSetting %/% 3]),
-                   scale = FALSE)
-  # noisesd <- simSetting[iSetting, 3]
-  # SettingString <- paste("n_", n, "_Eff_",
-  #                        paste(nonLinFIdx, collapse = "_"),
-  #                        "_sd_", noisesd, sep = "")
-  trueDF <-
-    data.frame(matrix(c(X_Big[,1:3],
-                        unlist(nonLinF), unlist(interF), globalF),
-                      ncol = 10))
-  SettingString <- paste("n_", n, "_Eff_",
-                         paste(nonLinFIdx, collapse = "_"),
-                         sep = "")
-  trueFileName <- paste("./UniformFeatureResults_New/", SettingString,
+  trueFileName <- paste("./UniformFeatureResults_New/", (iSetting + 1) %/% 2,
                         "_TRUE.RDS", sep = "")
-  saveRDS(trueDF, trueFileName)
-  # trueFileName <- paste("./UniformFeatureResults_New/", (iSetting + 1) %/% 2,
-  #                       "_TRUE.RDS", sep = "")
-  # trueData <- readRDS(trueFileName)
+  trueData <- readRDS(trueFileName)
+  effectVars <- diag(var(trueData[[nSim + 1]][,11:18]))
   for(j in 1:nSim)
   {
     if(iSetting == 5 & j < 6)
@@ -103,30 +57,32 @@ for(iSetting in 5:nrow(simSetting))
     }
     progressPercent <- ((iSetting - 1)*nSim + j)/
       (nrow(simSetting) * nSim)*100
-    # progressPercent <- ((iSetting - 1)*nSim + j)/
-    # (3 * nSim)*100
     cat('\r',paste0(progressPercent, "% complete"))
     flush.console()
     #create data####
     # x_sample <- 1:n_Big
-    x_sample <- sample(1:n_Big, n)
-    originalData = X_Big[x_sample,]
-    # tmp <- trueData[[j]][[as.character(n)]]
-    # originalData <- cbind(tmp$data, Y = tmp$totalPredictions)
+    # x_sample <- sample(1:n_Big, n)
+    # originalData = X_Big[x_sample,]
+    tmp <- trueData[[j]][[as.character(n)]]
+    originalData <- tmp$data
     #Generate data####
-    Y <- rep(0, n_Big)
+    Y <- rep(0, n)
     # Y <- X %*% trueBetas
+    tmp <- trueData[[nSim]][[as.character(n)]]
     for(idx in 1:p_inf)
     {
-      Y <- Y + nonLinF[[idx]]
+      nonLinString <- paste("X", idx, sep = "")
+      Y <- Y + tmp$finalTotalPredictions[, nonLinString] / sqrt(effectVars[nonLinString])
     }
     for(idx in 1:n_inter)
     {
-      Y <- Y + interF[[idx]]
+      interString <- paste("X", combn(1:p_inf, 2)[,idx], sep = "",
+                           collapse = "_")
+      Y <- Y + tmp$finalTotalPredictions[, interString] / sqrt(effectVars[interString])
     }
-    Y <- Y + globalF
-    Y_all <- Y
-    Y <- Y[x_sample]
+    globalString = paste("X", 1:p, sep = "",
+                       collapse = "_")
+    Y <- Y + tmp$finalTotalPredictions[, globalString] / sqrt(effectVars[globalString])
     # if(noisy)
     # {
     #   noise <- rnorm(n, sd = noisesd)
@@ -147,13 +103,14 @@ for(iSetting in 5:nrow(simSetting))
              ONAM:::getSubModel(inputs, regularizer = keras::regularizer_l1_l2(0.0125, 0.0125)),
            deep_model10 = function(inputs)
              ONAM:::getSubModel(inputs, regularizer = keras::regularizer_l1_l2(0.05, 0.05))
-           )
+      )
     modelRunTime <-
       system.time({modelRes <-
         ONAM:::fitPHOModel(modelFormula, list_of_deep_models,
                            originalData, 10)})
+    X_Big <- tmp$data
     modelEvalData <-
-      ONAM:::evaluateModelSimulation(modelRes, X_Big, Y_all)
+      ONAM:::evaluateModelSimulation(modelRes, X_Big, Y)
     modelEvalData <- c(modelEvalData,
                        modelRunTime = list(modelRunTime))
     SettingString <- paste("n_", n, "_Eff_",

@@ -1,4 +1,3 @@
-library(mgcv)
 purifyNonLinFunction <- function(idx, lotf, nonLinFIdx, X)
 {
   x <- X[,idx]
@@ -17,7 +16,7 @@ purifyInterFunction <- function(idx, interf, interFIdx, X)
   relData <- X[,combn(1:p_inf, 2)[,idx]]
   x1 <- relData[,1]
   x2 <- relData[,2]
-  mod <- gam(y ~ 1 + s(x1) + s(x2),
+  mod <- mgcv::gam(y ~ 1 + s(x1) + s(x2),
              data = data.frame(y = interf[[interFIdx[idx]]](x1, x2),
                                x1 = x1,
                                x2 = x2))
@@ -119,7 +118,7 @@ stackedOrthFunction <- function(nonLinFPre, interFPre, r, originalData,
              x1 <- relData[,1]
              x2 <- relData[,2]
              y <- interFPre[[idx]](x1, x2)
-             mod <- gam(y ~ 1 + s(x1) + s(x2),
+             mod <- mgcv::gam(y ~ 1 + s(x1) + s(x2),
                         data = data.frame(y = interf[[interFIdx[idx]]](x1, x2),
                                           x1 = x1,
                                           x2 = x2))
@@ -191,14 +190,14 @@ stackedOrthFunction <- function(nonLinFPre, interFPre, r, originalData,
 #              x1 <- relData[,1]
 #              x2 <- relData[,2]
 #              y <- interFPre[[idx]](x1, x2)
-#              mod <- gam(y ~ 1 + s(x1) + s(x2),
+#              mod <- mgcv::gam(y ~ 1 + s(x1) + s(x2),
 #                         data = data.frame(y = interf[[interFIdx[idx]]](x1, x2),
 #                                           x1 = x1,
 #                                           x2 = x2))
 #              return(mod$residuals)
 #            })
 #   globalTermValues <- apply(originalData, 1, globalTerm)
-#   globalMod <- gam(y ~ 1 + s(x1) + s(x2) + s(x3) + s(x1, x2) +
+#   globalMod <- mgcv::gam(y ~ 1 + s(x1) + s(x2) + s(x3) + s(x1, x2) +
 #                      s(x1, x3) + s(x2, x3),
 #                    data = data.frame(y = globalTermValues,
 #                                      x1 = originalData[,1],
