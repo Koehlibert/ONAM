@@ -20,9 +20,8 @@ Effects <- c(1,2,3)
 # simSetting <- expand.grid(nVals, Effects, noiseVals)
 simSetting <- expand.grid(nVals, Effects)
 #DGP####
-# betasToSample <- seq(-3, 3, by = 0.5)[-7]
-source("SimulationSettings.R")
-varEstimations <- readRDS("varEstimations.rds")
+# source("SimulationSettings.R")
+# varEstimations <- readRDS("varEstimations.rds")
 # Sigma <- matrix(0.5, ncol = p, nrow = p)
 # diag(Sigma) <- 1
 # Z <- mvrnorm(1000000, mu = rep(0,p), Sigma = Sigma)
@@ -48,13 +47,9 @@ for(iSetting in 1:nrow(simSetting))
   trueFileName <- paste("./UniformFeatureResults_New/", (iSetting + 1) %/% 2,
                         "_TRUE.RDS", sep = "")
   trueData <- readRDS(trueFileName)
-  effectVars <- diag(var(trueData[[nSim + 1]][,11:18]))
+  # effectVars <- diag(var(trueData[[nSim + 1]][,11:18]))
   for(j in 1:nSim)
   {
-    if(iSetting == 5 & j < 6)
-    {
-      next
-    }
     progressPercent <- ((iSetting - 1)*nSim + j)/
       (nrow(simSetting) * nSim)*100
     cat('\r',paste0(progressPercent, "% complete"))
@@ -67,22 +62,23 @@ for(iSetting in 1:nrow(simSetting))
     originalData <- tmp$data
     #Generate data####
     Y <- rep(0, n)
-    # Y <- X %*% trueBetas
-    tmp <- trueData[[nSim]][[as.character(n)]]
     for(idx in 1:p_inf)
     {
       nonLinString <- paste("X", idx, sep = "")
-      Y <- Y + tmp$finalTotalPredictions[, nonLinString] / sqrt(effectVars[nonLinString])
+      # Y <- Y + tmp$finalTotalPredictions[, nonLinString] / sqrt(effectVars[nonLinString])
+      Y <- Y + tmp$finalTotalPredictions[, nonLinString]
     }
     for(idx in 1:n_inter)
     {
       interString <- paste("X", combn(1:p_inf, 2)[,idx], sep = "",
                            collapse = "_")
-      Y <- Y + tmp$finalTotalPredictions[, interString] / sqrt(effectVars[interString])
+      # Y <- Y + tmp$finalTotalPredictions[, interString] / sqrt(effectVars[interString])
+      Y <- Y + tmp$finalTotalPredictions[, interString]
     }
     globalString = paste("X", 1:p, sep = "",
                        collapse = "_")
-    Y <- Y + tmp$finalTotalPredictions[, globalString] / sqrt(effectVars[globalString])
+    # Y <- Y + tmp$finalTotalPredictions[, globalString] / sqrt(effectVars[globalString])
+    Y <- Y + tmp$finalTotalPredictions[, globalString]
     # if(noisy)
     # {
     #   noise <- rnorm(n, sd = noisesd)
@@ -107,8 +103,9 @@ for(iSetting in 1:nrow(simSetting))
     modelRunTime <-
       system.time({modelRes <-
         ONAM:::fitPHOModel(modelFormula, list_of_deep_models,
-                           originalData, 10)})
-    X_Big <- tmp$data
+                           originalData, 10, progresstext = TRUE,
+                           verbose = 0)})
+    X_Big <- trueData[[nSim + 1]]$data
     modelEvalData <-
       ONAM:::evaluateModelSimulation(modelRes, X_Big, Y)
     modelEvalData <- c(modelEvalData,

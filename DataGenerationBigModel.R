@@ -4,7 +4,7 @@ library(MASS)
 library(dplyr)
 setwd("//imbie-fs/Projekte/Biostatistik/Projekte_Koehler/Deepregression/ONAM/")
 source("SimulationSettings.R")
-n_big <- 20000
+n_big <- 50000
 n_sim <- 10
 p <- 10
 n_inter <- 3
@@ -136,7 +136,7 @@ for(iSetting in 1:3)
   modelRunTime <-
     system.time({modelRes <-
       ONAM:::fitPHOModel(modelFormula, list_of_deep_models,
-                         originalData, 5, progresstext = TRUE,
+                         originalData, 10, progresstext = TRUE,
                          verbose = 1)})
   trainDataList <- list()
   modelEvalData <-
@@ -154,8 +154,7 @@ for(iSetting in 1:3)
       trainDataList[[i_sim]][[as.character(n_val)]] <- Train_Data
     }
   }
-  trueDF <- cbind(originalData, modelEvalData$finalTotalPredictions)
-  trainDataList[[n_sim + 1]] <- trueDF
+  trainDataList[[n_sim + 1]] <- modelEvalData
   trueFileName <- paste("./UniformFeatureResults_New/", iSetting,
                         "_TRUE.RDS", sep = "")
   saveRDS(trainDataList, trueFileName)

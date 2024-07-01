@@ -7,8 +7,7 @@ lotf <- list(function(x) cos(2*x),
              function(x) x^2,
              function(x) cos(2 * x),
              function(x) tanh(x),
-             function(x) - x^3,
-             function(x) -x * tanh(3*x) * sin(4*x))
+             function(x) - x^3)
 interf <- list(function(x1, x2) sin(1.5 * (x1^2 - x2^2)) + dnorm(0.5*x1 * x2),
                function(x1, x2) cos(x1 + x2) + sin(x1 * x2),
                function(x1, x2) 0.5 * sin((x1 - 1)^2+(x2 + 1)^2),
