@@ -3,14 +3,17 @@
 Achieving interpretable machine learning by functional decomposition of black-box models into explainable predictor effects
 
 ##Install package:
-`install.packages(devtools)  
+``` r
+install.packages(devtools)  
 library(devtools)  
 build()  
-library(ONAM)`
+library(ONAM)
+```
 
 ##Fit ONAM model on Chesapeake Bay watershed biotic integrity dataset
 
-`#define model formula
+``` r
+#define model formula
 BIBIformula <- Prediction ~ deep_model1(Latitude) + deep_model1(Longitude) +  
   deep_model1(BioregUpstream2) + deep_model1(AreaSqKM) +  
   deep_model1(dep_so4_2011) + deep_model1(elevation) +  
@@ -36,6 +39,7 @@ BIBIExpl <-
   fitPHOModel(BIBIformula, list_of_deep_models_BIBI,  
               trainData, 10, progresstext = TRUE, verbose = 1)  
 #get all predictions  
-BIBIEvalData <- ONAM:::evaluateModelGeneric(BIBIExpl)`  
+BIBIEvalData <- ONAM:::evaluateModelGeneric(BIBIExpl)
+```
 
 
