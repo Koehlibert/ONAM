@@ -2,7 +2,7 @@
 
 Achieving interpretable machine learning by functional decomposition of black-box models into explainable predictor effects
 
-##Install package:
+## Install package:
 ``` r
 install.packages(devtools)  
 library(devtools)  
@@ -10,7 +10,7 @@ build()
 library(ONAM)
 ```
 
-##Fit ONAM model on Chesapeake Bay watershed biotic integrity dataset
+## Fit ONAM model on Chesapeake Bay watershed biotic integrity dataset
 
 ``` r
 #define model formula
