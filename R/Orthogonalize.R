@@ -40,7 +40,7 @@ getU <- function(modelList, modelIdxList, modelInfoList, data)
              input <- modelList[[modelIdxList[[idx]]]] %>%
                ONAM:::getIntermediateModel() %>%
                predict(data[[dataDictionary[[modelIdxList[[idx]]]]]],
-                              verbose = 0)
+                       verbose = 0)
              if(modelList[[modelIdxList[[1]]]]$output$node$layer$get_config()$use_bias)
                input <- cbind(input, 1)
              return(input)
@@ -202,10 +202,10 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
     #Fit model####
     callback <-
       keras::keras$callbacks$EarlyStopping(monitor = "loss",
-                                    patience = 10)
+                                           patience = 10)
     history <- wholeModel %>%
       keras::fit(fitData, Y, epochs = 500, callbacks = callback,
-                                         verbose = verbose)
+                 verbose = verbose)
     #Orthogonalize####
     PHOEnsemble[[i]] <-
       ONAM:::PHO(modelList, modelInfoList, fitData)
