@@ -28,13 +28,13 @@ class pho_ensemble:
                                           y = self.Y, 
                                           epochs = epochs, **kwargs)
             ensemble_member.pho(self.fit_data)
-        self.final_pho()
+        # self.final_pho()
         
-    def final_pho(self):
-        member_predictions = [member.predict_separately(self.fit_data) 
-                              for member in self.ensemble]
-        mean_predictions = {key: np.array([member_predictions[key]])}
-        model_orders = {key: model.order
-                          for key, model in self.ensemble[0].submodels.model_dict.items()} | {"intercept": 1}
-        n_models = len(model_orders)
+    # def final_pho(self):
+    #     member_predictions = [member.predict_separately(self.fit_data) 
+    #                           for member in self.ensemble]
+    #     mean_predictions = {key: np.array([member_predictions[key]])}
+    #     model_orders = {key: model.order
+    #                       for key, model in self.ensemble[0].submodels.model_dict.items()} | {"intercept": 1}
+    #     n_models = len(model_orders)
         

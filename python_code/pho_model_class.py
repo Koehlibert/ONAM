@@ -37,10 +37,6 @@ class pho_model:
             tmp_u[:, mask] = 0
             tmp_u[:, -1] = 1
             h = np.matmul(tmp_u.transpose(), tmp_u)
-            # tmp, pivot = sympy.Matrix(h).T.rref(iszerofunc=lambda x: abs(x)<1e-12)
-            # tmp, pivot = sympy.Matrix(h).T.rref()
-            # tmp_u_reduced = tmp_u[:,pivot]
-            # tmp_inverse = np.linalg.inv(np.matmul(tmp_u_reduced.transpose(), tmp_u_reduced))
             outputs = {h_key: np.matmul(tmp_u_object.u, w.reshape((-1,1))) 
                        for h_key in h_o_keys for w in [new_w_dict[h_key]]}
             z = {h_key: np.linalg.lstsq(h, np.matmul(tmp_u.transpose(), output))[0].flatten()
@@ -52,8 +48,12 @@ class pho_model:
                 for h_key in h_o_keys:
                     w_update += z[h_key]
                 new_w_dict[l_key][tmp_u_object.u_indices[l_key]] += w_update[tmp_u_object.u_indices[l_key]]
-        all_o_means = [np.mean(np.matmul(tmp_u_object.u, w)) for w in new_w_dict.values()]
-        [w.put(-1, (-all_o_means[w_idx] if (w_idx != len(new_w_dict) - 1) else np.sum(all_o_means))) for w_idx, w in enumerate(new_w_dict.values())]
+        all_o_means = {key : np.mean(np.matmul(tmp_u_object.u, w)) for key, w in new_w_dict.items()}
+        for w_key, w in new_w_dict.items():
+            if(w_key != "intercept"):
+                w[-1] -= all_o_means[w_key]
+            else:
+                w[-1] += np.sum(value for key, value in all_o_means.items() if key != "intercept")
         self.pho_w_dict = new_w_dict
         pho_w_matrix = np.concatenate(list(new_w_dict.values()), axis = 0).reshape(tmp_u_object.u.shape[1], len(self.w_object.w_dict.values()), order = "F")
         self.pho_w_big = np.sum(pho_w_matrix, 1)

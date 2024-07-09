@@ -1,10 +1,5 @@
 import numpy as np
 class u_object:
-    # def __init__(self, u, u_list, u_dims, u_indices):
-    #     self.u = u
-    #     self.u_list = u_list
-    #     self.u_dims = u_dims
-    #     self.u_indices = u_indices
     def __init__(self, pho_model, data_container = None):
         self.u_dims = {model_key: model.output_shape_u_dims for model_key, model in pho_model.submodels.model_dict.items()} | {"intercept": 1}
         tmp_lower = np.cumsum([0] + list(self.u_dims.values())[:-1])

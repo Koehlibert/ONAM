@@ -17,7 +17,7 @@ BIBIData["BioregUpstream2"] = pd.factorize(BIBIData["BioregUpstream2"])[0] + 1
 dict_of_deep_models = {"deep_model": model_definition.submodel}
 
 test = pho_ensemble(model_formula, dict_of_deep_models)
-test.create_models(5)
+test.create_models(4)
 
 callback = keras.callbacks.EarlyStopping(monitor = "loss", patience = 10)
 
