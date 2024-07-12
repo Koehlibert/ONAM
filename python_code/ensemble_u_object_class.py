@@ -2,7 +2,10 @@ import numpy as np
 from u_object_class import u_object
 
 class ensemble_u_object(u_object):
-    def __init__(self, pho_ensemble):
+    def __init__(self, pho_ensemble, data = None):
+        if data is None:
+            data = pho_ensemble.fit_data
+
         member_predictions = [member.predict_separately(pho_ensemble.fit_data) 
                               for member in pho_ensemble.ensemble]
         self.u_dict = {key: np.array([member_prediction[key] 
