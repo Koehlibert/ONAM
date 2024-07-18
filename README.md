@@ -29,7 +29,9 @@ BIBIformula <- Prediction ~ deep_model1(Latitude) + deep_model1(Longitude) +
               upstream.total_precip, Agriculture, Development, Forest, Grass,  
               Woodywetland, Herbwetland)  
 #load data  
+library(readxl)
 trainData <- read_xlsx("BIBITrain.xlsx")
+trainData <- as.matrix(trainData)
 #Define Deep Models  
 list_of_deep_models_BIBI = list(deep_model1 = ONAM:::getSubModel)  
 #Fit PHONAM model  
@@ -37,7 +39,7 @@ BIBIExpl <-
   fitPHOModel(BIBIformula, list_of_deep_models_BIBI,  
               trainData, 10, progresstext = TRUE, verbose = 1)  
 #get all predictions  
-BIBIEvalData <- ONAM:::evaluateModelGeneric(BIBIExpl)
+BIBIEvalData <- evaluateModelGeneric(BIBIExpl)
 ```
 
 
