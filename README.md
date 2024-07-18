@@ -8,7 +8,7 @@ build()
 library(ONAM)
 ```
 
-## Fit ONAM model on Chesapeake Bay watershed biotic integrity dataset
+## Fit model on Chesapeake Bay watershed biotic integrity dataset
 
 ``` r
 #define model formula
