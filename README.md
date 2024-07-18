@@ -1,6 +1,4 @@
-# ONAM
-
-Achieving interpretable machine learning by functional decomposition of black-box models into explainable predictor effects
+# Achieving interpretable machine learning by functional decomposition of black-box models into explainable predictor effects
 
 ## Install package:
 ``` r
