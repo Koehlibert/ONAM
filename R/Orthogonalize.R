@@ -185,7 +185,7 @@ PHO <- function(modelList, modelInfoList, data)
 #' @param nEnsemble Number of orthogonal neural additive model ensembles
 #' @param progresstext Show model fitting progress. If `TRUE`, shows current number of ensemble being fitted
 #' @param verbose Verbose argument for internal model fitting. Used for debugging.
-#'
+#' @returns Returns a pho model object, containing all ensemble members, ensemble weights, and main and interaction effect outputs.
 #' @export
 fitPHOModel <- function(modelFormula, list_of_deep_models,
                         data, nEnsemble = 20,

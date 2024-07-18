@@ -76,7 +76,7 @@ evaluateSingleModel <- function(PHOModel, data, modelInfoList)
 }
 #' Evaluate orthogonal neural additive model
 #' @param PHOModelList Orthogonal neural additive model ensemble object to be evaluated
-#'
+#' @returns Returns a list containing data, model output for each observation in `data` and main and interaction effects obtained by the model
 #' @export
 evaluateModel <- function(PHOModelList)
 {
@@ -124,23 +124,8 @@ evaluateModel <- function(PHOModelList)
     dplyr::group_by(Observation) %>%
     dplyr::summarise(Prediction = sum(y)/nEnsemble) %>%
     dplyr::select(Prediction) %>% unlist()
-  totalFeaturePredsPre <-
-    lapply(effectNames,
-           function(effect)
-           {
-             predictionsData %>%
-               dplyr::filter(PHO == "Pre", Effect == effect) %>%
-               dplyr::group_by(Observation) %>%
-               dplyr::summarise(totalEffect = mean(y)) %>%
-               dplyr::select(totalEffect) %>% unlist()
-           })
-  names(totalFeaturePredsPre) <-
-    effectNames
   return(list(data = data,
               totalPredictions = totalPredictions,
-              predictionsData = predictionsData,
-              totalFeaturePredsPost = totalFeaturePredsPost,
-              totalFeaturePredsPre = totalFeaturePredsPre,
               finalTotalPredictions = finalTotalPredictions))
 }
 evaluateModelSimulation <- function(PHOModelList, X_Big, Y)

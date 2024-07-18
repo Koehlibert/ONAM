@@ -26,6 +26,9 @@ fitPHOModel(
 
 \item{verbose}{Verbose argument for internal model fitting. Used for debugging.}
 }
+\value{
+Returns a pho model object, containing all ensemble members, ensemble weights, and main and interaction effect outputs.
+}
 \description{
 Fit orthogonal neural additive model
 }

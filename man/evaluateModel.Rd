@@ -9,6 +9,9 @@ evaluateModel(PHOModelList)
 \arguments{
 \item{PHOModelList}{Orthogonal neural additive model ensemble object to be evaluated}
 }
+\value{
+Returns a list containing data, model output for each observation in \code{data} and main and interaction effects obtained by the model
+}
 \description{
 Evaluate orthogonal neural additive model
 }
