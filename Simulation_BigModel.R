@@ -11,31 +11,9 @@ p <- 10
 n_Big <- 10000
 p_inf <- 3
 n_inter <- factorial(p_inf)/(2*factorial(p_inf - 2))
-# AllNet <- TRUE
-# noisy <- TRUE
-# regularize <- TRUE
 nVals <- c(2000, 5000)
 Effects <- c(1,2,3)
-# noiseVals <- c(0.1,0.5,1)
-# simSetting <- expand.grid(nVals, Effects, noiseVals)
 simSetting <- expand.grid(nVals, Effects)
-#DGP####
-# source("SimulationSettings.R")
-# varEstimations <- readRDS("varEstimations.rds")
-# Sigma <- matrix(0.5, ncol = p, nrow = p)
-# diag(Sigma) <- 1
-# Z <- mvrnorm(1000000, mu = rep(0,p), Sigma = Sigma)
-# X <- (pnorm(Z) - 0.5) * 6
-# lotFVars <-
-#   sapply(1:length(lotf), function(i)
-#     var(lotf[[i]](X[,i])))
-# interFVars <- sapply(1:length(interf), function(i)
-#   var(interf[[i]](X[,switch(i, 1,1,2,4,4,5,7,7,8)],
-#                   X[,switch(i, 2,3,3,5,6,6,8,9,9)])))
-# globalTermVar <- var(apply(X, 1, globalTerm))
-# cor(X) # ca. 0.48
-#Model regularization####
-
 #Run Simulation####
 for(iSetting in 1:nrow(simSetting))
 # for(iSetting in 5:nrow(simSetting))
@@ -54,10 +32,6 @@ for(iSetting in 1:nrow(simSetting))
       (nrow(simSetting) * nSim)*100
     cat('\r',paste0(progressPercent, "% complete"))
     flush.console()
-    #create data####
-    # x_sample <- 1:n_Big
-    # x_sample <- sample(1:n_Big, n)
-    # originalData = X_Big[x_sample,]
     tmp <- trueData[[j]][[as.character(n)]]
     originalData <- tmp$data
     #Generate data####
@@ -65,25 +39,17 @@ for(iSetting in 1:nrow(simSetting))
     for(idx in 1:p_inf)
     {
       nonLinString <- paste("X", idx, sep = "")
-      # Y <- Y + tmp$finalTotalPredictions[, nonLinString] / sqrt(effectVars[nonLinString])
       Y <- Y + tmp$finalTotalPredictions[, nonLinString]
     }
     for(idx in 1:n_inter)
     {
       interString <- paste("X", combn(1:p_inf, 2)[,idx], sep = "",
                            collapse = "_")
-      # Y <- Y + tmp$finalTotalPredictions[, interString] / sqrt(effectVars[interString])
       Y <- Y + tmp$finalTotalPredictions[, interString]
     }
     globalString = paste("X", 1:p, sep = "",
                        collapse = "_")
-    # Y <- Y + tmp$finalTotalPredictions[, globalString] / sqrt(effectVars[globalString])
     Y <- Y + tmp$finalTotalPredictions[, globalString]
-    # if(noisy)
-    # {
-    #   noise <- rnorm(n, sd = noisesd)
-    #   Y <- Y + noise
-    # }
     originalData <- cbind(originalData, Y)
     colnames(originalData) <- c(paste("X", 1:p, sep = ""), "Y")
     modelFormula <-
