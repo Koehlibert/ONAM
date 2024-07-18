@@ -74,6 +74,9 @@ evaluateSingleModel <- function(PHOModel, data, modelInfoList)
   return(list(subModelPredictions = subModelPredictions,
               subModelPredictionsOld = subModelPredictionsOld))
 }
+#' Evaluate orthogonal neural additive model
+#' @param PHOModelList Orthogonal neural additive model ensemble object to be evaluated
+#'
 #' @export
 evaluateModel <- function(PHOModelList)
 {

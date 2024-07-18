@@ -177,6 +177,15 @@ PHO <- function(modelList, modelInfoList, data)
                   W_List_old = W_List_old)
   return(retList)
 }
+#' Fit orthogonal neural additive model
+#'
+#' @param modelFormula Formula for model fitting. Specify deep parts with the same name as `list_of_deep_models`.
+#' @param list_of_deep_models List of named models used in `model_formula`.
+#' @param data Data to be fitted
+#' @param nEnsemble Number of orthogonal neural additive model ensembles
+#' @param progresstext Show model fitting progress. If `TRUE`, shows current number of ensemble being fitted
+#' @param verbose Verbose argument for internal model fitting. Used for debugging.
+#'
 #' @export
 fitPHOModel <- function(modelFormula, list_of_deep_models,
                         data, nEnsemble = 20,
