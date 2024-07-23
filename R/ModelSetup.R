@@ -126,6 +126,7 @@ getThetaFromFormula <- function(modelFormula, list_of_deep_models)
                         outcome = outcomeVar)
   return(modelInfoList)
 }
+#help function to detect symbols
 findSymbol <- function(currList)
 {
   return(lapply(currList, function(item) if(is.symbol(item)) item else findSymbol(item)))
@@ -151,6 +152,7 @@ remove_string_recursive <- function(lst, remove_str)
     return(lst)
   }
 }
+#create ONAM model based on model info and deep model list
 createModel <- function(modelInfoList, list_of_deep_models)
 {
   inputsList <- ONAM:::createInputs(modelInfoList)
@@ -159,6 +161,7 @@ createModel <- function(modelInfoList, list_of_deep_models)
   return(list(model = wholeModel,
               modelList = modelList))
 }
+#create inputs for each submodel
 createInputs <- function(modelInfoList)
 {
   if(length(modelInfoList$theta$Linear) > 0)
@@ -183,6 +186,7 @@ createInputs <- function(modelInfoList)
   return(list(Deep = deepInputs,
               Additive = linInputs))
 }
+#create all submodels
 createModels <- function(modelInfoList, inputsList, list_of_deep_models)
 {
   linModels <- lapply(inputsList$Additive,
@@ -204,6 +208,7 @@ createModels <- function(modelInfoList, inputsList, list_of_deep_models)
                   Additive = list(linModels))
   return(all_models)
 }
+#concatenate models in modelList
 concatenate_ModelList <- function(modelList, bias = FALSE)
 {
   tmpOutput <-
@@ -217,6 +222,7 @@ concatenate_ModelList <- function(modelList, bias = FALSE)
   tmpOutput$node$layer %>% keras::set_weights(tmpWeights)
   return(tmpOutput)
 }
+#compile created pho ensemble member
 compileModel <- function(inputsList, modelList)
 {
   subModels <- unlist(modelList, use.names = FALSE) #Why does this matter?
@@ -229,6 +235,7 @@ compileModel <- function(inputsList, modelList)
                    optimizer = keras::optimizer_adam())
   return(wholeModel)
 }
+#prepare data for model fitting by bringing it into the right input dimensions
 prepareData <- function(originalData, modelInfoList)
 {
   additiveData <-
@@ -243,6 +250,7 @@ prepareData <- function(originalData, modelInfoList)
   newData <- unname(newData)
   return(newData)
 }
+#Create "dictionary" yielding data indices for nested model list
 getDataDictionary <- function(modelInfoList)
 {
   dictionaryList <- list()

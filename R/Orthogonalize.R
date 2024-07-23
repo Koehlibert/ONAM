@@ -20,6 +20,7 @@ solveSingularMatrix <- function(tmpU, Pivot)
            })
   return(Pivot)
 }
+#get list of all submodel indices in modelInfoList$theta
 getModelIdxList <- function(modelInfoList)
 {
   modelIdxList <-
@@ -30,6 +31,7 @@ getModelIdxList <- function(modelInfoList)
     unlist(recursive = FALSE)
   return(modelIdxList)
 }
+#get penultimate output for all submodels
 getU <- function(modelList, modelIdxList, modelInfoList, data)
 {
   dataDictionary <- ONAM:::getDataDictionary(modelInfoList)
@@ -64,6 +66,7 @@ getU <- function(modelList, modelIdxList, modelInfoList, data)
                   U_IndicesList = U_IndicesList)
   return(retList)
 }
+#get list of weights in last layer of each subfunction
 getW_List <- function(modelList, modelIdxList, modelInfoList, U_IndicesList)
 {
   W_List_Sep <- lapply(seq_along(modelIdxList),
@@ -86,6 +89,7 @@ getW_List <- function(modelList, modelIdxList, modelInfoList, U_IndicesList)
     )
   return(W_List)
 }
+#post hoc orthogonalization of fitted submodels
 PHO <- function(modelList, modelInfoList, data)
 {
   modelIdxList <- ONAM:::getModelIdxList(modelInfoList)
@@ -231,6 +235,7 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
                   finalOutputs = list(finalOutputs))
   return(returnList)
 }
+#post hoc orthogonalization of fitted (and  separately orthogonalized) ensemble members
 finalPHO <- function(modelEvalData, modelInfoList)
 {
   nEnsemble <- max(modelEvalData$predictionsData$Model)
