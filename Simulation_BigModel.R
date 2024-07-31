@@ -58,14 +58,7 @@ for(iSetting in 1:nrow(simSetting))
                 deep_model(X1, X2) + deep_model(X1, X3) + deep_model(X2, X3) +
                 deep_model(X1, X2, X3, X4, X5, X6, X7, X8, X9, X10))
     list_of_deep_models =
-      list(deep_model = ONAM:::getSubModel,
-           deep_model1 = function(inputs)
-             ONAM:::getSubModel(inputs, regularizer = keras::regularizer_l1_l2(0.001, 0.001)),
-           deep_model2 = function(inputs)
-             ONAM:::getSubModel(inputs, regularizer = keras::regularizer_l1_l2(0.0125, 0.0125)),
-           deep_model10 = function(inputs)
-             ONAM:::getSubModel(inputs, regularizer = keras::regularizer_l1_l2(0.05, 0.05))
-      )
+      list(deep_model = ONAM:::getSubModel)
     modelRunTime <-
       system.time({modelRes <-
         ONAM:::fitPHOModel(modelFormula, list_of_deep_models,
