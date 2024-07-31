@@ -1,4 +1,6 @@
 # Achieving interpretable machine learning by functional decomposition of black-box models into explainable predictor effects
+Code to reproduce results from Köhler, Rügamer and Schmid (2024):
+
 
 ## Install package:
 ``` r
