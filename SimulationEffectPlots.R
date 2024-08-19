@@ -109,7 +109,7 @@ for(iOuter in 1:3)
                                        ensembleIdx = NULL)
     for(j in 1:nSim)
     {
-      resFileName <- paste("./ONAM/UniformFeatureResults_New/", SettingString, "_run_", j, ".RDS", sep = "")
+      resFileName <- paste("./ONAM/UniformFeatureResults_New Working/", SettingString, "_run_", j, ".RDS", sep = "")
       tmpRes <- readRDS(resFileName)
       X <- tmpRes$data
       tmp_plot_data_main1 <-
@@ -146,7 +146,7 @@ for(iOuter in 1:3)
                          y = tmpRes$finalTotalPredictions[,"X2_X3"],
                          ensembleIdx = j))
     }
-    trueFileName <- paste("./ONAM/UniformFeatureResults_New/", (iSetting + 1) %/% 2,
+    trueFileName <- paste("./ONAM/UniformFeatureResults_New Working/", (iSetting + 1) %/% 2,
                           "_TRUE.RDS", sep = "")
     # SettingString <- paste("n_", n, "_Eff_",
     #                        paste(nonLinFIdx, collapse = "_"),
@@ -400,16 +400,16 @@ plot_layout_main <-
 big_plot_n_main_2000 <-
   wrap_plots(plot_list_main[[1]], guides = "collect",
              design = plot_layout_main) & theme(legend.position = "bottom")
-ggsave("sim_main_n_2000.pdf",
+ggsave("sim_main_n_2000.png",
        big_plot_n_main_2000,
-       device = "pdf",
+       device = "png",
        width = 9, height = 10)
 big_plot_n_main_5000 <-
   wrap_plots(plot_list_main[[2]], guides = "collect",
              design = plot_layout_main) & theme(legend.position = "bottom")
-ggsave("sim_main_n_5000.pdf",
+ggsave("sim_main_n_5000.png",
        big_plot_n_main_5000,
-       device = "pdf",
+       device = "png",
        width = 9, height = 10)
 
 names(plot_list_inter[[1]]) <-
@@ -446,7 +446,8 @@ big_plot_n_inter_2000 <-
 ggsave("sim_inter_n_2000.pdf",
        big_plot_n_inter_2000,
        device = "pdf",
-       width = 6, height = 20)
+       width = 6, height = 20,
+       useDingbats = TRUE)
 # big_plot_n_inter_5000 <-
 #   wrap_plots(plot_list_inter[[1]], guides = "collect",
 #              design = plot_layout_inter) &
@@ -458,7 +459,8 @@ big_plot_n_inter_5000 <-
 ggsave("sim_inter_n_5000.pdf",
        big_plot_n_inter_5000,
        device = "pdf",
-       width = 6, height = 20)
+       width = 6, height = 20,
+       useDingbats = TRUE)
 
 big_plot_n_inter_5000 <-
   ggarrange(plotlist = plot_list_inter[[1]],
