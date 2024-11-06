@@ -35,7 +35,7 @@ library(readxl)
 trainData <- read_xlsx("BIBITrain.xlsx")
 trainData <- as.matrix(trainData)
 #Define Deep Models  
-list_of_deep_models_BIBI = list(deep_model1 = ONAM:::getSubModel)  
+list_of_deep_models_BIBI <- list(deep_model1 = ONAM:::getSubModel)  
 #Fit PHONAM model  
 BIBIExpl <-  
   fitPHOModel(BIBIformula, list_of_deep_models_BIBI,  
