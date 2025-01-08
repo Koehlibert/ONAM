@@ -81,6 +81,7 @@ BIBIExpl <-
   fitPHOModel(BIBIformula, list_of_deep_models_BIBI,  
               trainData, nEnsemble = 2, progresstext = TRUE, verbose = 1)  
 #get all predictions  
+BIBIEvalData <- evaluateModel(BIBIExpl)
 
 #BIBIEvalData$finalTotalPredictions contains orthogonalized feature effects.
 #Example for effect plot:
