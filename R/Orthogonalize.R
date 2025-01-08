@@ -1,4 +1,7 @@
 #' @importFrom dplyr %>%
+#' @name %>%
+#' @rdname pipe
+#' @export
 #' Get submodel until penultimate layer
 getIntermediateModel <- function(model, layerIdx = length(model$layers) - 1)
 {
