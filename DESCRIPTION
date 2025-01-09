@@ -1,15 +1,24 @@
 Package: ONAM
-Title: What the Package Does (One Line, Title Case)
+Title: Orthogonal Neural Additive Models
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+    person("David", "Köhler", , "koehler@imbie.uni-bonn.de", 
+    role = c("aut", "cre"))
+Description: Fits identifiable neural additive models with post hoc orthogonalization 
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
+Depends:
+    dplyr,
+    stringr,
+    keras,
+    tensorflow,
+    ggplot2,
+    scales,
+    mgcv,
+    ggplot2
 Imports:
     dplyr,
     stringr,
@@ -17,4 +26,5 @@ Imports:
     tensorflow,
     ggplot2,
     scales,
-    mgcv
+    mgcv,
+    ggplot2
