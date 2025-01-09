@@ -193,6 +193,26 @@ PHO <- function(modelList, modelInfoList, data)
 #' @param progresstext Show model fitting progress. If `TRUE`, shows current number of ensemble being fitted
 #' @param verbose Verbose argument for internal model fitting. Used for debugging.
 #' @returns Returns a pho model object, containing all ensemble members, ensemble weights, and main and interaction effect outputs.
+#' @examples
+#' \dontrun{
+#' # Basic example for a simple ONAM-model
+#' # Create training data
+#' n <- 1000
+#' x1 <- runif(n, -2, 2)
+#' x2 <- runif(n, -2, 2)
+#' y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
+#'   pweibull(-x2, shape = 0.5)) +
+#'   x1 * x2
+#' trainDat <- cbind(x1, x2, y)
+#' # Define model
+#' model_formula <- y ~ mod1(x1) + mod1(x2) +
+#'   mod1(x1, x2)
+#' list_of_deep_models <- list(mod1 = ONAM:::getSubModel)
+#' # Fit model
+#' mod <- fitPHOModel(model_formula, list_of_deep_models,
+#'                    trainDat, nEnsemble = 2,
+#'                    progresstext = T, verbose = 1)
+#' }
 #' @export
 fitPHOModel <- function(modelFormula, list_of_deep_models,
                         data, nEnsemble = 20,
