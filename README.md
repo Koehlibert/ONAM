@@ -6,16 +6,16 @@ https://arxiv.org/abs/2407.18650
 ``` r
 install.packages(devtools)  
 library(devtools)  
-build()  
-library(ONAM)
+install_github("Koehlibert/ONAM")
 ```
-
+If this is the first time using keras or tensorflow in R, you need to run `keras::install_keras()`.
 ## Fit model on Chesapeake Bay watershed biotic integrity dataset
 
 ``` r
 library(keras)
 #define model architectures
-deep_model1 <- function(inputs)
+#These are example architectures for a simple feedforward neural network with fully connected layers of varying depth
+m1 <- function(inputs)
 {
   outputs <- inputs %>%
     keras::layer_dense(units = 64, activation = "relu",
@@ -32,7 +32,7 @@ deep_model1 <- function(inputs)
   subModel <- keras::keras_model(inputs, outputs)
   return(subModel)
 }
-deep_model2 <- function(inputs)
+m2 <- function(inputs)
 {
   outputs <- inputs %>%
     keras::layer_dense(units = 128, activation = "relu",
@@ -73,9 +73,9 @@ BIBIformula <- Prediction ~ deep_model1(Latitude) + deep_model1(Longitude) +
 library(readxl)
 trainData <- read_xlsx("BIBITrain.xlsx")
 trainData <- as.matrix(trainData)
-#Define Deep Models  
-list_of_deep_models_BIBI <- list(deep_model1 = deep_model1,
-                                 deep_model2 = deep_model2)
+#Specify model architecture in a named list where the name corresponds to the model name in the model formula
+list_of_deep_models_BIBI <- list(deep_model1 = m1,
+                                 deep_model2 = m2)
 #Fit PHONAM model  
 BIBIExpl <-  
   fitPHOModel(BIBIformula, list_of_deep_models_BIBI,  
