@@ -33,7 +33,7 @@ Returns a pho model object, containing all ensemble members, ensemble weights, a
 Fit orthogonal neural additive model
 }
 \examples{
-\dontrun{
+\donttest{
 # Basic example for a simple ONAM-model
 # Create training data
 n <- 1000

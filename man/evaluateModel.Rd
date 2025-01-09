@@ -4,10 +4,12 @@
 \alias{evaluateModel}
 \title{Evaluate orthogonal neural additive model}
 \usage{
-evaluateModel(PHOModelList)
+evaluateModel(PHOModelList, data = PHOModelList$data)
 }
 \arguments{
 \item{PHOModelList}{Orthogonal neural additive model ensemble object to be evaluated}
+
+\item{data}{Data for which the model is to be evaluated}
 }
 \value{
 Returns a list containing data, model output for each observation in \code{data} and main and interaction effects obtained by the model

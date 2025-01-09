@@ -194,7 +194,7 @@ PHO <- function(modelList, modelInfoList, data)
 #' @param verbose Verbose argument for internal model fitting. Used for debugging.
 #' @returns Returns a pho model object, containing all ensemble members, ensemble weights, and main and interaction effect outputs.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Basic example for a simple ONAM-model
 #' # Create training data
 #' n <- 1000

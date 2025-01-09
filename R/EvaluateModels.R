@@ -34,9 +34,11 @@ evaluateSingleModel <- function(PHOModel, data, modelInfoList)
 }
 #' Evaluate orthogonal neural additive model
 #' @param PHOModelList Orthogonal neural additive model ensemble object to be evaluated
+#' @param data Data for which the model is to be evaluated
 #' @returns Returns a list containing data, model output for each observation in `data` and main and interaction effects obtained by the model
 #' @export
-evaluateModel <- function(PHOModelList)
+evaluateModel <- function(PHOModelList,
+                          data = PHOModelList$data)
 {
   data <- PHOModelList$data
   modelInfoList <- PHOModelList$modelInfoList
