@@ -6,7 +6,7 @@ https://arxiv.org/abs/2407.18650
 ``` r
 install.packages(devtools)  
 library(devtools)  
-install_github("Koehlibert/ONAM")
+devtools::install_github("Koehlibert/ONAM")
 ```
 If this is the first time using keras or tensorflow in R, you need to run `keras::install_keras()`.
 ## Fit model on Chesapeake Bay watershed biotic integrity dataset
