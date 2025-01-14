@@ -2,5 +2,6 @@
 
 export(evaluateModel)
 export(fitPHOModel)
+export(plotInterEffect)
 export(plotMainEffect)
 importFrom(dplyr,"%>%")
