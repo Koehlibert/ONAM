@@ -190,6 +190,7 @@ PHO <- function(modelList, modelInfoList, data)
 #' @param list_of_deep_models List of named models used in `model_formula`.
 #' @param data Data to be fitted
 #' @param nEnsemble Number of orthogonal neural additive model ensembles
+#' @param callback Callback to be called during training.
 #' @param progresstext Show model fitting progress. If `TRUE`, shows current number of ensemble being fitted
 #' @param verbose Verbose argument for internal model fitting. Used for debugging.
 #' @returns Returns a pho model object, containing all ensemble members, ensemble weights, and main and interaction effect outputs.
@@ -216,6 +217,7 @@ PHO <- function(modelList, modelInfoList, data)
 #' @export
 fitPHOModel <- function(modelFormula, list_of_deep_models,
                         data, nEnsemble = 20,
+                        callback = NULL,
                         progresstext = FALSE, verbose = 0)
 {
   modelInfoList <-
@@ -236,9 +238,9 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
     wholeModel <- modelObject$model
     modelList <- modelObject$modelList
     #Fit model####
-    callback <-
-      keras::keras$callbacks$EarlyStopping(monitor = "loss",
-                                           patience = 10)
+    # callback <-
+    #   keras::keras$callbacks$EarlyStopping(monitor = "loss",
+    #                                        patience = 10)
     history <- wholeModel %>%
       keras::fit(fitData, Y, epochs = 500, callbacks = callback,
                  verbose = verbose)

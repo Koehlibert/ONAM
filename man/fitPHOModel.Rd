@@ -9,6 +9,7 @@ fitPHOModel(
   list_of_deep_models,
   data,
   nEnsemble = 20,
+  callback,
   progresstext = FALSE,
   verbose = 0
 )
@@ -21,6 +22,8 @@ fitPHOModel(
 \item{data}{Data to be fitted}
 
 \item{nEnsemble}{Number of orthogonal neural additive model ensembles}
+
+\item{callback}{Callback to be called during training.}
 
 \item{progresstext}{Show model fitting progress. If \code{TRUE}, shows current number of ensemble being fitted}
 
