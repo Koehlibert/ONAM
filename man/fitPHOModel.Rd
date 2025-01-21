@@ -8,8 +8,9 @@ fitPHOModel(
   modelFormula,
   list_of_deep_models,
   data,
+  categorical_features = NULL,
   nEnsemble = 20,
-  callback,
+  callback = NULL,
   progresstext = FALSE,
   verbose = 0
 )
@@ -20,6 +21,8 @@ fitPHOModel(
 \item{list_of_deep_models}{List of named models used in \code{model_formula}.}
 
 \item{data}{Data to be fitted}
+
+\item{categorical_features}{Vector of which features are categorical.}
 
 \item{nEnsemble}{Number of orthogonal neural additive model ensembles}
 

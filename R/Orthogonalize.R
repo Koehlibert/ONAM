@@ -189,6 +189,7 @@ PHO <- function(modelList, modelInfoList, data)
 #' @param modelFormula Formula for model fitting. Specify deep parts with the same name as `list_of_deep_models`.
 #' @param list_of_deep_models List of named models used in `model_formula`.
 #' @param data Data to be fitted
+#' @param categorical_features Vector of which features are categorical.
 #' @param nEnsemble Number of orthogonal neural additive model ensembles
 #' @param callback Callback to be called during training.
 #' @param progresstext Show model fitting progress. If `TRUE`, shows current number of ensemble being fitted
@@ -216,14 +217,17 @@ PHO <- function(modelList, modelInfoList, data)
 #' }
 #' @export
 fitPHOModel <- function(modelFormula, list_of_deep_models,
-                        data, nEnsemble = 20,
+                        data, categorical_features = NULL,
+                        nEnsemble = 20,
                         callback = NULL,
                         progresstext = FALSE, verbose = 0)
 {
   modelInfoList <-
     ONAM:::getThetaFromFormula(modelFormula, list_of_deep_models)
   fitData <-
-    ONAM:::prepareData(data, modelInfoList)
+    ONAM:::prepareData(data, modelInfoList, categorical_features)
+  cat_counts <- ONAM:::get_category_counts(categorical_features,
+                                    data)
   Y <- data[,which(colnames(data) == as.character(modelInfoList$outcome))]
   PHOEnsemble <- list()
   for(i in 1:nEnsemble)
@@ -234,7 +238,8 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
       flush.console()
     }
     modelObject <-
-      ONAM:::createModel(modelInfoList, list_of_deep_models)
+      ONAM:::createModel(modelInfoList, list_of_deep_models,
+                         categorical_features, cat_counts)
     wholeModel <- modelObject$model
     modelList <- modelObject$modelList
     #Fit model####
@@ -250,7 +255,8 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
   }
   PHOModelList <- list(PHOEnsemble = PHOEnsemble,
                        modelInfoList = modelInfoList,
-                       data = data)
+                       data = data,
+                       categorical_features = categorical_features)
   modelEvalData <-
     ONAM:::evaluateModelGenericPre(PHOModelList)
   finalPHOList <- ONAM:::finalPHO(modelEvalData, modelInfoList)
