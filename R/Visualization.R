@@ -2,7 +2,7 @@
 #' @param evalData Model output as obtained from ONAM::evaluateModel
 #' @param effect Effect to be plotted, must be present in the model formula. For interaction terms, use plotInteractionEffect
 #' @returns Returns a ggplot2 object of the specified effect
-#' @export
+#' @export plotMainEffect
 plotMainEffect <- function(evalData, effect)
 {
   if(!effect %in% colnames(evalData$finalTotalPredictions))
@@ -26,7 +26,7 @@ plotMainEffect <- function(evalData, effect)
 #' @param customColors color palette object for the interaction plot. Default is "spectral", returning a color palette based on the spectral theme.
 #' @param n_interpolate number of values per coordinate axis to interpolate. Ignored if interpolate = FALSE.
 #' @returns Returns a ggplot2 object of the specified effect interaction
-#' @export
+#' @export plotInterEffect
 plotInterEffect <- function(evalData, effect1, effect2,
                             interpolate = FALSE,
                             customColors = "spectral",

@@ -1,7 +1,7 @@
 #' @importFrom dplyr %>%
 #' @name %>%
 #' @rdname pipe
-#' @export
+#' @export pipe
 #' Get submodel until penultimate layer
 getIntermediateModel <- function(model, layerIdx = length(model$layers) - 1)
 {
@@ -215,7 +215,7 @@ PHO <- function(modelList, modelInfoList, data)
 #'                    trainDat, nEnsemble = 2,
 #'                    progresstext = T, verbose = 1)
 #' }
-#' @export
+#' @export fitPHOModel
 fitPHOModel <- function(modelFormula, list_of_deep_models,
                         data, categorical_features = NULL,
                         nEnsemble = 20,
