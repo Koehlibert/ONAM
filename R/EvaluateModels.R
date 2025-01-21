@@ -1,9 +1,11 @@
-evaluateSingleModel <- function(PHOModel, data, modelInfoList)
+evaluateSingleModel <- function(PHOModel, data, modelInfoList,
+                                categorical_features)
 {
-  fitData <- ONAM:::prepareData(data, modelInfoList)
+  fitData <- ONAM:::prepareData(data, modelInfoList,
+                                categorical_features)
   modelIdxList <- ONAM:::getModelIdxList(modelInfoList)
   U_Object <-
-    getU(PHOModel$modelList, modelIdxList, modelInfoList, fitData)
+    ONAM:::getU(PHOModel$modelList, modelIdxList, modelInfoList, fitData)
   subModelPredictions <-
     lapply(PHOModel$W_List,
            function(W)
@@ -44,9 +46,11 @@ evaluateModel <- function(PHOModelList,
   modelInfoList <- PHOModelList$modelInfoList
   n <- nrow(data)
   nEnsemble <- length(PHOModelList$PHOEnsemble)
+  categorical_features <- PHOModelList$categorical_features
   separatePredictions <-
     lapply(PHOModelList$PHOEnsemble, ONAM:::evaluateSingleModel,
-           data = data, modelInfoList = modelInfoList)
+           data = data, modelInfoList = modelInfoList,
+           categorical_features = categorical_features)
   effectNames <- names(separatePredictions[[1]][[1]])
   nEffects <- length(effectNames)
   predictionsData <-
@@ -92,11 +96,13 @@ evaluateModelGenericPre <- function(PHOModelList)
 {
   data <- PHOModelList$data
   modelInfoList <- PHOModelList$modelInfoList
+  categorical_features <- PHOModelList$categorical_features
   n <- nrow(data)
   nEnsemble <- length(PHOModelList$PHOEnsemble)
   separatePredictions <-
     lapply(PHOModelList$PHOEnsemble, ONAM:::evaluateSingleModel,
-           data = data, modelInfoList = modelInfoList)
+           data = data, modelInfoList = modelInfoList,
+           categorical_features = categorical_features)
   effectNames <- names(separatePredictions[[1]][[1]])
   nEffects <- length(effectNames)
   predictionsData <-

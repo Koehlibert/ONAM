@@ -45,6 +45,15 @@ getLinearSubModel <- function(inputs)
                        dtype = "float64")
   subModel <- keras::keras_model(inputs, outputs)
 }
+#Define model architecture for categorical variable
+getCategoricalSubModel <- function(inputs)
+{
+  outputs <- inputs %>%
+    keras::layer_dense(units = 1, activation = "linear",
+                       use_bias = TRUE,
+                       dtype = "float64")
+  subModel <- keras::keras_model(inputs, outputs)
+}
 #Derive Theta from model Formula
 getThetaFromFormula <- function(modelFormula, list_of_deep_models)
 {
@@ -131,38 +140,20 @@ findSymbol <- function(currList)
 {
   return(lapply(currList, function(item) if(is.symbol(item)) item else findSymbol(item)))
 }
-remove_element <- function(lst, indices)
-{
-  if (length(indices) == 1) {
-    lst[[indices]] <- NULL
-  } else {
-    lst[[indices[1]]] <- ONAM:::remove_element(lst[[indices[1]]], indices[-1])
-  }
-  return(lst)
-}
-remove_string_recursive <- function(lst, remove_str)
-{
-  if (is.list(lst)) {
-    lst <- lapply(lst, function(x) ONAM:::remove_string_recursive(x, remove_str))
-    lst <- lapply(lst, function(sublist) Filter(function(item) {
-      is.symbol(item) || !item %in% as.name(strings_to_remove)
-    }, sublist))
-    return(lst)
-  } else {
-    return(lst)
-  }
-}
 #create ONAM model based on model info and deep model list
-createModel <- function(modelInfoList, list_of_deep_models)
+createModel <- function(modelInfoList, list_of_deep_models,
+                        categorical_features, cat_counts)
 {
-  inputsList <- ONAM:::createInputs(modelInfoList)
+  inputsList <- ONAM:::createInputs(modelInfoList,
+                                    categorical_features, cat_counts)
   modelList <- ONAM:::createModels(modelInfoList, inputsList, list_of_deep_models)
   wholeModel <- ONAM:::compileModel(inputsList, modelList)
   return(list(model = wholeModel,
               modelList = modelList))
 }
 #create inputs for each submodel
-createInputs <- function(modelInfoList)
+createInputs <- function(modelInfoList, categorical_features,
+                         cat_counts)
 {
   if(length(modelInfoList$theta$Linear) > 0)
     linInputs <- lapply(1:length(modelInfoList$theta$Linear),
@@ -173,13 +164,18 @@ createInputs <- function(modelInfoList)
     lapply(1:length(modelInfoList$theta[setdiff(names(modelInfoList$theta),
                                                 "Linear")]),
            function(interCountIdx)
-           {
-             nInputs <-
-               as.numeric(names(modelInfoList$theta)[interCountIdx])
-             subInputList <-
-               lapply(1:length(modelInfoList$theta[[interCountIdx]]),
-                      function(tmp) keras::layer_input(shape = nInputs))
-           })
+             lapply(modelInfoList$theta[[interCountIdx]],
+                    function(subtheta)
+                    {
+                      n_inputs <- length(subtheta)
+                      for(feature_name in subtheta)
+                      {
+                        if(as.character(feature_name) %in% names(cat_counts))
+                          n_inputs <- n_inputs + cat_counts[[feature_name]] - 1
+                      }
+                      keras::layer_input(shape = n_inputs)
+                    })
+    )
   names(deepInputs) <-
     names(modelInfoList$theta[setdiff(names(modelInfoList$theta),
                                       "Linear")])
@@ -236,7 +232,8 @@ compileModel <- function(inputsList, modelList)
   return(wholeModel)
 }
 #prepare data for model fitting by bringing it into the right input dimensions
-prepareData <- function(originalData, modelInfoList)
+prepareData <- function(originalData, modelInfoList,
+                        categorical_features)
 {
   additiveData <-
     lapply(modelInfoList$theta$Linear,
@@ -245,7 +242,23 @@ prepareData <- function(originalData, modelInfoList)
   deepData <-
     lapply(unlist(modelInfoList$theta[setdiff(names(modelInfoList$theta),
                                               "Linear")], recursive = FALSE),
-           function(subTheta) originalData[,as.character(unlist(subTheta))])
+           function(subTheta)
+           {
+             ret_mat <- matrix(nrow = nrow(originalData), ncol = 0)
+             for(feature in subTheta)
+             {
+               feature <- as.character(unlist(feature))
+               ret_mat <-
+                 cbind(ret_mat,
+                       if(feature %in% categorical_features)
+                         ONAM:::encode_dummy(originalData[,feature], feature)
+                       else
+                         originalData[,feature])
+               if(!feature %in% categorical_features)
+                 colnames(ret_mat)[ncol(ret_mat)] <- feature
+             }
+             return(ret_mat)
+           })
   newData <- c(deepData, additiveData)
   newData <- unname(newData)
   return(newData)
@@ -265,4 +278,24 @@ getDataDictionary <- function(modelInfoList)
     }
   }
   return(dictionaryList)
+}
+#create dummy variables for categorical data
+encode_dummy <- function(x, name)
+{
+  uq_vals <- unique(x)
+  ret_mat <- matrix(sapply(uq_vals[-1], function(val) x == val),
+                    nrow = length(x))
+  colnames(ret_mat) <- paste(name, uq_vals[-1], sep = "_")
+  return(ret_mat)
+}
+#get number of unique categories per categorical feature - 1 (because of dummy encoding)
+get_category_counts <- function(categorical_features,
+                                data)
+{
+  ret_list <-
+    lapply(categorical_features,
+           function(feature)
+             length(unique(data[,feature])) - 1)
+  names(ret_list) <- categorical_features
+  return(ret_list)
 }
