@@ -76,16 +76,17 @@ trainData <- as.matrix(trainData)
 #Specify model architecture in a named list where the name corresponds to the model name in the model formula
 list_of_deep_models_BIBI <- list(deep_model1 = m1,
                                  deep_model2 = m2)
+categorical_features <- c("BioregUpstream2")
 #Fit PHONAM model  
 BIBIExpl <-  
-  fitPHOModel(BIBIformula, list_of_deep_models_BIBI,  
+  fitPHOModel(BIBIformula, list_of_deep_models_BIBI, 
+              categorical_features = categorical_features,
               trainData, nEnsemble = 2, progresstext = TRUE, verbose = 1)  
 #get all predictions  
 BIBIEvalData <- evaluateModel(BIBIExpl)
 
 #BIBIEvalData$finalTotalPredictions contains orthogonalized feature effects.
 #Example for effect plot:
-plot(trainData[,"Forest"], BIBIEvalData$finalTotalPredictions[,"Forest"])
+plotMainEffect(BIBIEvalData, "Development")
+plotInterEffect(BIBIEvalData, "Agriculture", "Development")
 ```
-
-
