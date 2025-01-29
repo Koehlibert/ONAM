@@ -9,6 +9,7 @@ fitPHOModel(
   list_of_deep_models,
   data,
   categorical_features = NULL,
+  epochs = 500,
   nEnsemble = 20,
   callback = NULL,
   progresstext = FALSE,
@@ -23,6 +24,8 @@ fitPHOModel(
 \item{data}{Data to be fitted}
 
 \item{categorical_features}{Vector of which features are categorical.}
+
+\item{epochs}{Number of epochs to train the model.}
 
 \item{nEnsemble}{Number of orthogonal neural additive model ensembles}
 
@@ -54,8 +57,12 @@ model_formula <- y ~ mod1(x1) + mod1(x2) +
   mod1(x1, x2)
 list_of_deep_models <- list(mod1 = ONAM:::getSubModel)
 # Fit model
+callback <-
+keras::keras$callbacks$EarlyStopping(monitor = "loss",
+                                     patience = 10)
 mod <- fitPHOModel(model_formula, list_of_deep_models,
                    trainDat, nEnsemble = 2,
+                   callback = callback,
                    progresstext = T, verbose = 1)
 }
 }

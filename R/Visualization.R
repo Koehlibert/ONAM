@@ -2,6 +2,28 @@
 #' @param evalData Model output as obtained from ONAM::evaluateModel
 #' @param effect Effect to be plotted, must be present in the model formula. For interaction terms, use plotInteractionEffect
 #' @returns Returns a ggplot2 object of the specified effect
+#' #' @examples
+#' \donttest{
+#' # Basic example for a simple ONAM-model
+#' # Create training data
+#' n <- 1000
+#' x1 <- runif(n, -2, 2)
+#' x2 <- runif(n, -2, 2)
+#' y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
+#'   pweibull(-x2, shape = 0.5)) +
+#'   x1 * x2
+#' trainDat <- cbind(x1, x2, y)
+#' # Define model
+#' model_formula <- y ~ mod1(x1) + mod1(x2) +
+#'   mod1(x1, x2)
+#' list_of_deep_models <- list(mod1 = ONAM:::getSubModel)
+#' # Fit model
+#' mod <- fitPHOModel(model_formula, list_of_deep_models,
+#'                    trainDat, nEnsemble = 2,
+#'                    progresstext = T, verbose = 1)
+#' evalData <- evaluateModel(mod)
+#' plotMainEffect(evalData, "x1")
+#' }
 #' @export plotMainEffect
 plotMainEffect <- function(evalData, effect)
 {
@@ -26,6 +48,27 @@ plotMainEffect <- function(evalData, effect)
 #' @param customColors color palette object for the interaction plot. Default is "spectral", returning a color palette based on the spectral theme.
 #' @param n_interpolate number of values per coordinate axis to interpolate. Ignored if interpolate = FALSE.
 #' @returns Returns a ggplot2 object of the specified effect interaction
+#' #' @examples
+#' \donttest{
+#' # Basic example for a simple ONAM-model
+#' # Create training data
+#' n <- 1000
+#' x1 <- runif(n, -2, 2)
+#' x2 <- runif(n, -2, 2)
+#' y <- sin(x1) + ifelse(x2 > 0, pweibull(x2, shape = 3),
+#'   pweibull(-x2, shape = 0.5)) +
+#'   x1 * x2
+#' trainDat <- cbind(x1, x2, y)
+#' # Define model
+#' model_formula <- y ~ mod1(x1) + mod1(x2) +
+#'   mod1(x1, x2)
+#' list_of_deep_models <- list(mod1 = ONAM:::getSubModel)
+#' # Fit model
+#' mod <- fitPHOModel(model_formula, list_of_deep_models,
+#'                    trainDat, nEnsemble = 2,
+#'                    progresstext = T, verbose = 1)
+#' evalData <- evaluateModel(mod)
+#' plotInterEffect(evalData, "x1", "x2", interpolate = TRUE)
 #' @export plotInterEffect
 plotInterEffect <- function(evalData, effect1, effect2,
                             interpolate = FALSE,
@@ -55,10 +98,10 @@ plotInterEffect <- function(evalData, effect1, effect2,
   if(interpolate)
   {
     tmpInterp <-
-      akima::interp(x = BIBIEvalData$data[,effect1],
-                    y = BIBIEvalData$data[,effect2],
+      akima::interp(x = evalData$data[,effect1],
+                    y = evalData$data[,effect2],
                     z =
-                      BIBIEvalData$finalTotalPredictions[,inter],
+                      evalData$finalTotalPredictions[,inter],
                     nx = n_interpolate, ny = n_interpolate,
                     duplicate = "mean")
     plotData <-
@@ -81,10 +124,10 @@ plotInterEffect <- function(evalData, effect1, effect2,
   }else
   {
     plotData <-
-      data.frame(x = BIBIEvalData$data[,effect1],
-                 y = BIBIEvalData$data[,effect2],
+      data.frame(x = evalData$data[,effect1],
+                 y = evalData$data[,effect2],
                  Prediction =
-                   BIBIEvalData$finalTotalPredictions[,inter])
+                   evalData$finalTotalPredictions[,inter])
     aes_gradient <-
       scale_color_gradientn(colors =
                              customColors(n = 100),
