@@ -13,7 +13,11 @@ plotMainEffect(evalData, effect)
 }
 \value{
 Returns a ggplot2 object of the specified effect
-#' @examples
+}
+\description{
+Plot Main Effect
+}
+\examples{
 \donttest{
 # Basic example for a simple ONAM-model
 # Create training data
@@ -35,7 +39,4 @@ mod <- fitPHOModel(model_formula, list_of_deep_models,
 evalData <- evaluateModel(mod)
 plotMainEffect(evalData, "x1")
 }
-}
-\description{
-Plot Main Effect
 }

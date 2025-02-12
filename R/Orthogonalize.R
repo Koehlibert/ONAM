@@ -1,8 +1,4 @@
-#' @importFrom dplyr %>%
-#' @name %>%
-#' @rdname pipe
-#' @export pipe
-#' Get submodel until penultimate layer
+#Get submodel until penultimate layer
 getIntermediateModel <- function(model, layerIdx = length(model$layers) - 1)
 {
   deep_part_in <- keras::get_layer(model, index = as.integer(layerIdx))
@@ -18,7 +14,7 @@ solveSingularMatrix <- function(tmpU, Pivot)
            error = function(error)
            {
              Pivot <<-
-               ONAM:::solveSingularMatrix(tmpU,
+               solveSingularMatrix(tmpU,
                                           Pivot[1:(length(Pivot) - 1)])
            })
   return(Pivot)
@@ -37,13 +33,13 @@ getModelIdxList <- function(modelInfoList)
 #get penultimate output for all submodels
 getU <- function(modelList, modelIdxList, modelInfoList, data)
 {
-  dataDictionary <- ONAM:::getDataDictionary(modelInfoList)
+  dataDictionary <- getDataDictionary(modelInfoList)
   U_List <-
     lapply(seq_along(modelIdxList),
            function(idx)
            {
              input <- modelList[[modelIdxList[[idx]]]] %>%
-               ONAM:::getIntermediateModel() %>%
+               getIntermediateModel() %>%
                predict(data[[dataDictionary[[modelIdxList[[idx]]]]]],
                        verbose = 0)
              if(modelList[[modelIdxList[[1]]]]$output$node$layer$get_config()$use_bias)
@@ -95,11 +91,11 @@ getW_List <- function(modelList, modelIdxList, modelInfoList, U_IndicesList)
 #post hoc orthogonalization of fitted submodels
 PHO <- function(modelList, modelInfoList, data)
 {
-  modelIdxList <- ONAM:::getModelIdxList(modelInfoList)
+  modelIdxList <- getModelIdxList(modelInfoList)
   U_Object <-
-    ONAM:::getU(modelList, modelIdxList, modelInfoList, data)
+    getU(modelList, modelIdxList, modelInfoList, data)
   W_List <-
-    ONAM:::getW_List(modelList, modelIdxList, modelInfoList,
+    getW_List(modelList, modelIdxList, modelInfoList,
                      U_Object$U_IndicesList)
   W_List_old <- W_List
   modelOrder <-
@@ -119,7 +115,7 @@ PHO <- function(modelList, modelInfoList, data)
     H <- crossprod(tmpU)
     qrRes <- qr(H)
     H_order <- qrRes$pivot[1:qrRes$rank]
-    Pivot <- ONAM:::solveSingularMatrix(tmpU, H_order)
+    Pivot <- solveSingularMatrix(tmpU, H_order)
     tmpUReduced <- tmpU[,Pivot]
     tmpInverse <- solve(t(tmpUReduced) %*% tmpUReduced)
     higherOrderIdxList <- which(modelOrder == (orthoIdx - 1))
@@ -229,10 +225,10 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
                         progresstext = FALSE, verbose = 0)
 {
   modelInfoList <-
-    ONAM:::getThetaFromFormula(modelFormula, list_of_deep_models)
+    getThetaFromFormula(modelFormula, list_of_deep_models)
   fitData <-
-    ONAM:::prepareData(data, modelInfoList, categorical_features)
-  cat_counts <- ONAM:::get_category_counts(categorical_features,
+    prepareData(data, modelInfoList, categorical_features)
+  cat_counts <- get_category_counts(categorical_features,
                                            data)
   Y <- data[,which(colnames(data) == as.character(modelInfoList$outcome))]
   PHOEnsemble <- list()
@@ -244,7 +240,7 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
       flush.console()
     }
     modelObject <-
-      ONAM:::createModel(modelInfoList, list_of_deep_models,
+      createModel(modelInfoList, list_of_deep_models,
                          categorical_features, cat_counts)
     wholeModel <- modelObject$model
     modelList <- modelObject$modelList
@@ -257,15 +253,15 @@ fitPHOModel <- function(modelFormula, list_of_deep_models,
                  verbose = verbose)
     #Orthogonalize####
     PHOEnsemble[[i]] <-
-      ONAM:::PHO(modelList, modelInfoList, fitData)
+      PHO(modelList, modelInfoList, fitData)
   }
   PHOModelList <- list(PHOEnsemble = PHOEnsemble,
                        modelInfoList = modelInfoList,
                        data = data,
                        categorical_features = categorical_features)
   modelEvalData <-
-    ONAM:::evaluateModelGenericPre(PHOModelList)
-  finalPHOList <- ONAM:::finalPHO(modelEvalData, modelInfoList)
+    evaluateModelGenericPre(PHOModelList)
+  finalPHOList <- finalPHO(modelEvalData, modelInfoList)
   finalW <- finalPHOList[[1]]
   finalOutputs <- finalPHOList[[2]]
   returnList <- c(PHOModelList, finalW = list(finalW),
@@ -278,7 +274,7 @@ finalPHO <- function(modelEvalData, modelInfoList)
   nEnsemble <- max(modelEvalData$predictionsData$Model)
   data <- modelEvalData$data
   n <- nrow(data)
-  modelIdxList <- ONAM:::getModelIdxList(modelInfoList)
+  modelIdxList <- getModelIdxList(modelInfoList)
   modelOrder <-
     lapply(modelIdxList,
            function(modelIdx)
@@ -297,7 +293,7 @@ finalPHO <- function(modelEvalData, modelInfoList)
     H <- crossprod(tmpU)
     qrRes <- qr(H)
     H_order <- qrRes$pivot[1:qrRes$rank]
-    Pivot <- ONAM:::solveSingularMatrix(tmpU, H_order)
+    Pivot <- solveSingularMatrix(tmpU, H_order)
     tmpUReduced <- tmpU[,Pivot]
     tmpInverse <- solve(t(tmpUReduced) %*% tmpUReduced)
     higherOrderIdxList <- which(modelOrder == (orthoIdx - 1))
@@ -342,3 +338,6 @@ finalPHO <- function(modelEvalData, modelInfoList)
     names(modelEvalData$totalFeaturePredsPost)
   return(list(W, finalOutputs))
 }
+#' @importFrom dplyr %>%
+#' @export
+NULL

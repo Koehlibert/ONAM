@@ -2,7 +2,7 @@
 #' @param evalData Model output as obtained from ONAM::evaluateModel
 #' @param effect Effect to be plotted, must be present in the model formula. For interaction terms, use plotInteractionEffect
 #' @returns Returns a ggplot2 object of the specified effect
-#' #' @examples
+#' @examples
 #' \donttest{
 #' # Basic example for a simple ONAM-model
 #' # Create training data
@@ -36,8 +36,9 @@ plotMainEffect <- function(evalData, effect)
   plotData <-
     data.frame(x = evalData$data[,effect],
                y = evalData$finalTotalPredictions[,effect])
-  out_plot <- ggplot(plotData, aes(x = x, y = y)) +
-    geom_point() + ylab("Effect") + xlab(effect)
+  out_plot <- ggplot2::ggplot(plotData, aes(x = x, y = y)) +
+    ggplot2::geom_point() + ggplot2::ylab("Effect") +
+    ggplot2::xlab(effect)
   return(out_plot)
 }
 #' Plot Main Effect
@@ -46,9 +47,9 @@ plotMainEffect <- function(evalData, effect)
 #' @param effect2 Second effect to be plotted
 #' @param interpolate If TRUE, values will be interpolated for a smooth plot. If FALSE (default), only observations in the data will be plotted.
 #' @param customColors color palette object for the interaction plot. Default is "spectral", returning a color palette based on the spectral theme.
-#' @param n_interpolate number of values per coordinate axis to interpolate. Ignored if interpolate = FALSE.
-#' @returns Returns a ggplot2 object of the specified effect interaction
-#' #' @examples
+#' @param n_interpolate number of values per coordinate axis to interpolate. Ignored if 'interpolate = FALSE'.
+#' @returns Returns a 'ggplot2' object of the specified effect interaction
+#' @examples
 #' \donttest{
 #' # Basic example for a simple ONAM-model
 #' # Create training data
@@ -69,6 +70,7 @@ plotMainEffect <- function(evalData, effect)
 #'                    progresstext = T, verbose = 1)
 #' evalData <- evaluateModel(mod)
 #' plotInterEffect(evalData, "x1", "x2", interpolate = TRUE)
+#' }
 #' @export plotInterEffect
 plotInterEffect <- function(evalData, effect1, effect2,
                             interpolate = FALSE,
@@ -92,7 +94,8 @@ plotInterEffect <- function(evalData, effect1, effect2,
   {
     if(customColors == "spectral")
     {
-      customColors <- colorRampPalette(colors = (x = RColorBrewer::brewer.pal(n = 11, name = "Spectral")))
+      customColors <-
+        grDevices::colorRampPalette(colors = (x = RColorBrewer::brewer.pal(n = 11, name = "Spectral")))
     }
   }
   if(interpolate)
@@ -110,17 +113,17 @@ plotInterEffect <- function(evalData, effect1, effect2,
                  Prediction = tmpInterp$z %>% c())
     plotData <- plotData[which(!is.na(plotData$Prediction)),]
     aes_gradient <-
-      scale_fill_gradientn(colors =
-                             customColors(n = 100),
-                           values =
-                             scales::rescale(c(min(plotData$Prediction),
-                                               mean(plotData$Prediction),
-                                               max(plotData$Prediction))),
-                           guide = "colorbar",
-                           limits = c(min(plotData$Prediction),
-                                      max(plotData$Prediction)))
-    geom_param <- geom_tile()
-    aes_param <- aes(x = x, y = y, fill = Prediction)
+      ggplot2::scale_fill_gradientn(colors =
+                                      customColors(n = 100),
+                                    values =
+                                      scales::rescale(c(min(plotData$Prediction),
+                                                        mean(plotData$Prediction),
+                                                        max(plotData$Prediction))),
+                                    guide = "colorbar",
+                                    limits = c(min(plotData$Prediction),
+                                               max(plotData$Prediction)))
+    geom_param <- ggplot2::geom_tile()
+    aes_param <- ggplot2::aes(x = x, y = y, fill = Prediction)
   }else
   {
     plotData <-
@@ -129,30 +132,30 @@ plotInterEffect <- function(evalData, effect1, effect2,
                  Prediction =
                    evalData$finalTotalPredictions[,inter])
     aes_gradient <-
-      scale_color_gradientn(colors =
-                             customColors(n = 100),
-                           values =
-                             scales::rescale(c(min(plotData$Prediction),
-                                               mean(plotData$Prediction),
-                                               max(plotData$Prediction))),
-                           guide = "colorbar",
-                           limits = c(min(plotData$Prediction),
-                                      max(plotData$Prediction)))
-    geom_param <- geom_point()
-    aes_param <- aes(x = x, y = y, color = Prediction)
+      ggplot2::scale_color_gradientn(colors =
+                              customColors(n = 100),
+                            values =
+                              scales::rescale(c(min(plotData$Prediction),
+                                                mean(plotData$Prediction),
+                                                max(plotData$Prediction))),
+                            guide = "colorbar",
+                            limits = c(min(plotData$Prediction),
+                                       max(plotData$Prediction)))
+    geom_param <- ggplot2::geom_point()
+    aes_param <- ggplot2::aes(x = x, y = y, color = Prediction)
   }
-  inter_theme <- theme(plot.title.position = "plot",
+  inter_theme <- ggplot2::theme(plot.title.position = "plot",
                        plot.caption.position =  "plot",
                        # plot.margin = grid::unit(c(0,0,0,0), "mm"),
                        panel.grid = element_blank(),
                        panel.background = element_blank(),
                        legend.position = "right")
   out_plot <-
-    ggplot(plotData, aes_param) +
+    ggplot2::ggplot(plotData, aes_param) +
     # geom_point(size = 0.75) +
     geom_param +
     aes_gradient +
     inter_theme +
-    ylab(effect1) + xlab(effect2)
+    ggplot2::ylab(effect1) + ggplot2::xlab(effect2)
   return(out_plot)
 }

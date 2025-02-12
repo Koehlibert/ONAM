@@ -58,7 +58,7 @@ getCategoricalSubModel <- function(inputs)
 getThetaFromFormula <- function(modelFormula, list_of_deep_models)
 {
   #Separate Symbols
-  thetaList <- lapply(modelFormula, ONAM:::findSymbol)
+  thetaList <- lapply(modelFormula, findSymbol)
   outcomeVar <- thetaList[[2]][[1]]
   partsList <- list()
   while(length(thetaList) > 0)
@@ -144,10 +144,10 @@ findSymbol <- function(currList)
 createModel <- function(modelInfoList, list_of_deep_models,
                         categorical_features, cat_counts)
 {
-  inputsList <- ONAM:::createInputs(modelInfoList,
+  inputsList <- createInputs(modelInfoList,
                                     categorical_features, cat_counts)
-  modelList <- ONAM:::createModels(modelInfoList, inputsList, list_of_deep_models)
-  wholeModel <- ONAM:::compileModel(inputsList, modelList)
+  modelList <- createModels(modelInfoList, inputsList, list_of_deep_models)
+  wholeModel <- compileModel(inputsList, modelList)
   return(list(model = wholeModel,
               modelList = modelList))
 }
@@ -186,7 +186,7 @@ createInputs <- function(modelInfoList, categorical_features,
 createModels <- function(modelInfoList, inputsList, list_of_deep_models)
 {
   linModels <- lapply(inputsList$Additive,
-                      ONAM:::getLinearSubModel)
+                      getLinearSubModel)
   deepModels <- list()
   for(p_idx in
       names(modelInfoList$theta[setdiff(names(modelInfoList$theta),
@@ -224,7 +224,7 @@ compileModel <- function(inputsList, modelList)
   subModels <- unlist(modelList, use.names = FALSE) #Why does this matter?
   all_inputs <- unlist(inputsList, use.names = FALSE)
   wholeModel <- subModels %>%
-    ONAM:::concatenate_ModelList(bias = TRUE)
+    concatenate_ModelList(bias = TRUE)
   wholeModel <- keras::keras_model(all_inputs, wholeModel)
   wholeModel <- wholeModel %>%
     keras::compile(loss = keras::loss_mean_squared_error(),
@@ -251,7 +251,7 @@ prepareData <- function(originalData, modelInfoList,
                ret_mat <-
                  cbind(ret_mat,
                        if(feature %in% categorical_features)
-                         ONAM:::encode_dummy(originalData[,feature], feature)
+                         encode_dummy(originalData[,feature], feature)
                        else
                          originalData[,feature])
                if(!feature %in% categorical_features)
