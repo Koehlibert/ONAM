@@ -1,6 +1,8 @@
 # Achieving interpretable machine learning by functional decomposition of black-box models into explainable predictor effects
 Code to reproduce results from Köhler, Rügamer and Schmid (2024):
 https://arxiv.org/abs/2407.18650
+For an updated version of the ONAM package, see
+https://github.com/Koehlibert/ONAM_R
 
 ## Install package:
 ``` r
