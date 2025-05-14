@@ -76,17 +76,16 @@ onam <- function(formula,
               list_of_deep_models,
               feature_names,
               categorical_features)
-  if (!is.matrix(data)) {
-    data <- as.matrix(data)
-  }
-  data_fit <-
-    prepare_data(data, model_info, categorical_features)
   cat_counts <- get_category_counts(categorical_features,
                                     data)
   if (!is.null(model)) {
     if (is.null(prediction_function)) {
-      prediction_function <-
-        utils::getS3method("predict", class(model), optional = TRUE)
+      for (tmp_class in class(model)) {
+        prediction_function <-
+          utils::getS3method("predict", tmp_class, optional = TRUE)
+        if (!is.null(prediction_function))
+          break
+      }
       if (is.null(prediction_function)) {
         stop(
           paste0(
@@ -99,18 +98,42 @@ onam <- function(formula,
           call. = FALSE
         )
       }
-      y <- predict(model, data = data)
     }
     y <- prediction_function(model, data)
+    if (class(y) == "factor") {
+      if (is.null(target)) {
+        warning("Prediction function supplied factor. Binary outcome is assumed.")
+        target <- "binary"
+        y <- as.numeric(as.character(y))
+      } else if (target != "binary") {
+        stop(
+          paste0(
+            "Prediction function supplied factor, but target was supplied as ",
+            target,
+            "."
+          ),
+          call. = FALSE
+        )
+      } else {
+        y <- as.numeric(as.character(y))
+      }
+    }
     if (!is.vector(y)) {
       stop(
-        "Prediction function does not return an appropriate outcome. Please specify a prediction function that returns a vector of predictions."
+        "Prediction function does not return an appropriate outcome. Please specify a prediction function that returns a vector of predictions.",
+        call. = FALSE
       )
     }
+
   } else {
     y <- data[, which(colnames(data) ==
                         as.character(model_info$outcome))]
   }
+  # if (!is.matrix(data)) {
+  #   data <- as.matrix(data)
+  # }
+  data_fit <-
+    prepare_data(data, model_info, categorical_features)
   ensemble <- list()
   for (i in 1:n_ensemble) {
     if (progresstext) {

@@ -1,0 +1,108 @@
+---
+title: "ONAM data examples"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::robobook:
+  self_contained: true
+  thumbnails: true
+  lightbox: true
+  gallery: false
+  highlight: tango
+  toc_depth: 3
+---
+Code to reproduce results from Köhler, Rügamer and Schmid \(2024\):
+
+https://arxiv.org/abs/2407.18650
+
+For an updated version of the ONAM package, see
+
+https://github.com/Koehlibert/ONAM_R
+
+## Install package:
+```{r install onam, eval = FALSE}
+install.packages("devtools")  
+library(devtools)  
+devtools::install_github("Koehlibert/ONAM")
+```
+If this is the first time using keras or tensorflow in R, you need to run `keras::install_keras()`.
+## Fit model on Chesapeake Bay watershed biotic integrity dataset
+Load data and setup model architecture
+``` {r model setup, echo = TRUE, results = "hide"}
+library(keras)
+library(readxl)
+library(ONAM)
+#load data
+trainData <- read_xlsx("BIBITrain.xlsx")
+#define model formula
+BIBIformula <-
+  Prediction ~ deep_model(Latitude) + deep_model(Longitude) +
+  deep_model(BioregUpstream2) + deep_model(AreaSqKM) +
+  deep_model(dep_so4_2011) + deep_model(elevation) +
+  deep_model(hydrogroup_d4) + deep_model(percent_sandy) +
+  deep_model(surfcoarse) + deep_model(deg_barr_all_local) +
+  deep_model(upstream.total_precip) + deep_model(Agriculture) +
+  deep_model(Development) + deep_model(Forest) + deep_model(Openwater) +
+  deep_model(Barren) + deep_model(Grass) + deep_model(Woodywetland) +
+  deep_model(Herbwetland) +
+  deep_model(Development, elevation) +
+  deep_model(Agriculture, elevation) +
+  deep_model(Agriculture, Development) +
+  deep_model(
+    Latitude,
+    Longitude,
+    BioregUpstream2,
+    AreaSqKM,
+    dep_so4_2011,
+    elevation,
+    hydrogroup_d4,
+    percent_sandy,
+    surfcoarse,
+    deg_barr_all_local,
+    Openwater,
+    Barren,
+    upstream.total_precip,
+    Agriculture,
+    Development,
+    Forest,
+    Grass,
+    Woodywetland,
+    Herbwetland
+  )
+#Specify model architecture in a named list where the name corresponds to the model name in the model formula
+list_of_deep_models_BIBI <- list(deep_model = ONAM:::get_submodel)
+categorical_features <- c("BioregUpstream2")
+```
+
+```{r, fit ONAM model, echo = TRUE, results = "hide"}
+#Fit PHONAM model
+BIBIExpl <-
+  onam(
+    BIBIformula,
+    list_of_deep_models_BIBI,
+    categorical_features = categorical_features,
+    trainData,
+    n_ensemble = 2,
+    epochs = 100,
+    progresstext = FALSE,
+    verbose = 1
+  )
+#generate prediction object for saving
+BIBI_Res <- predict(BIBIExpl)
+saveRDS(BIBI_Res, "BIBI_Res.RDS")
+```
+# Model visualization
+```{r model summary, echo = TRUE}
+summary(BIBIExpl)
+```
+
+```{r effect plots, echo = TRUE}
+plot_main_effect(BIBI_Res, "Forest")
+plot_main_effect(BIBI_Res, "Development")
+plot_main_effect(BIBI_Res, "Barren")
+plot_main_effect(BIBI_Res, "upstream.total_precip")
+
+plot_inter_effect(BIBI_Res, "Development", "Agriculture", interpolate = TRUE)
+plot_inter_effect(BIBI_Res, "Agriculture", "elevation", interpolate = TRUE)
+plot_inter_effect(BIBI_Res, "Development", "elevation", interpolate = TRUE)
+```
+

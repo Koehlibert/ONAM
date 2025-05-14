@@ -1,0 +1,79 @@
+---
+title: "Data examples"
+output: html_document
+date: "2025-05-14"
+---
+Code to reproduce results from Köhler, Rügamer and Schmid (2024):
+
+https://arxiv.org/abs/2407.18650
+
+For an updated version of the ONAM package, see
+
+https://github.com/Koehlibert/ONAM_R
+
+## Install package:
+```{r install onam, eval = FALSE}
+install.packages("devtools")  
+library(devtools)  
+devtools::install_github("Koehlibert/ONAM")
+```
+If this is the first time using keras or tensorflow in R, you need to run `keras::install_keras()`.
+## Fit model on Chesapeake Bay watershed biotic integrity dataset
+
+``` {r fit model to BIBI data}
+library(keras)
+library(ONAM)
+#define model formula
+BIBIformula <-
+  Prediction ~ deep_model(Latitude) + deep_model(Longitude) +
+  deep_model(BioregUpstream2) + deep_model(AreaSqKM) +
+  deep_model(dep_so4_2011) + deep_model(elevation) +
+  deep_model(hydrogroup_d4) + deep_model(percent_sandy) +
+  deep_model(surfcoarse) + deep_model(deg_barr_all_local) +
+  deep_model(upstream.total_precip) + deep_model(Agriculture) +
+  deep_model(Development) + deep_model(Forest) + deep_model(Openwater) +
+  deep_model(Barren) + deep_model(Grass) + deep_model(Woodywetland) +
+  deep_model(Herbwetland) +
+  deep_model(Development, elevation) +
+  deep_model(Agriculture, elevation) +
+  deep_model(Agriculture, Development) +
+  deep_model(
+    Latitude,
+    Longitude,
+    BioregUpstream2,
+    AreaSqKM,
+    dep_so4_2011,
+    elevation,
+    hydrogroup_d4,
+    percent_sandy,
+    surfcoarse,
+    deg_barr_all_local,
+    Openwater,
+    Barren,
+    upstream.total_precip,
+    Agriculture,
+    Development,
+    Forest,
+    Grass,
+    Woodywetland,
+    Herbwetland
+  )
+#load data
+library(readxl)
+trainData <- read_xlsx("BIBITrain.xlsx")
+trainData <- as.matrix(trainData)
+#Specify model architecture in a named list where the name corresponds to the model name in the model formula
+list_of_deep_models_BIBI <- list(deep_model = ONAM:::get_submodel)
+categorical_features <- c("BioregUpstream2")
+#Fit PHONAM model
+BIBIExpl <-
+  onam(
+    BIBIformula,
+    list_of_deep_models_BIBI,
+    categorical_features = categorical_features,
+    trainData,
+    n_ensemble = 10,
+    progresstext = TRUE,
+    verbose = 1
+  )
+```

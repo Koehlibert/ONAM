@@ -86,7 +86,7 @@ plot_inter_effect <- function(object,
   inter <- paste(effect1, effect2, sep = "_")
   if (!is.null(check_inputs_plot(object, inter, interaction = 1))) {
     inter <- paste(effect2, effect1, sep = "_")
-    if (check_inputs_plot(object, inter, interaction = 2) == 2) {
+    if (!is.null(check_inputs_plot(object, inter, interaction = 2))) {
       stop(paste(
         "No interaction effect fitted for ",
         effect1,
