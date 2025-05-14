@@ -4,7 +4,7 @@
 ``` r
 install.packages("devtools")  
 library(devtools)  
-devtools::install_github("Koehlibert/ONAM_R")
+devtools::install_github("Koehlibert/ONAM")
 ```
 If this is the first time using keras or tensorflow in R, you need to run `keras::install_keras()`.
 This readme will guide you through the workflow of specifying, fitting and analysing an orthogonal neural additive model.
