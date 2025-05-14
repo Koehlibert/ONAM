@@ -48,8 +48,8 @@
 #' list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 #' # Fit model
 #' callback <-
-#' keras::keras$callbacks$EarlyStopping(monitor = "loss",
-#'                                      patience = 10)
+#'   keras::keras$callbacks$EarlyStopping(monitor = "loss",
+#'                                        patience = 10)
 #' mod <- onam(model_formula, list_of_deep_models,
 #'                    data_train, n_ensemble = 2, epochs = 10,
 #'                    callback = callback,

@@ -11,6 +11,7 @@ onam(
   model = NULL,
   prediction_function = NULL,
   categorical_features = NULL,
+  target = "continuous",
   n_ensemble = 20,
   epochs = 500,
   callback = NULL,
@@ -35,6 +36,11 @@ outcome. Only used if \code{model} is specified. If \code{NULL}(default), S3-met
 based on the \code{model}argument is used.}
 
 \item{categorical_features}{Vector of feature names of categorical features.}
+
+\item{target}{Target of prediction task. Can be either "continuous" or
+"binary". For "continuous"(default), an additive model for the prediction of
+a continuous outcome is fitted. For "binary", a binary classification with
+sigmoid activation in the last layer is fitted.}
 
 \item{n_ensemble}{Number of orthogonal neural additive model ensembles}
 

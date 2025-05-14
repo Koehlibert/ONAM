@@ -4,7 +4,6 @@ library(ggpubr)
 library(latex2exp)
 library(patchwork)
 library(akima)
-setwd("//imbie-fs/Projekte/Biostatistik/Projekte_Koehler/Deepregression/")
 nSim <- 10
 n_inter <- 3
 p_inf <- 3
@@ -79,13 +78,13 @@ for(iOuter in 1:3)
   settingIndices <- 2 * (iOuter - 1) + 1:2
   # plotData <- data.frame(x = NULL, y = NULL, run = NULL, Orthogonalization = NULL,
   #                        Feature = NULL, n = NULL, TrueEffect = NULL)
-  # for(iSetting in settingIndices)
-  for(iSetting in settingIndices)
+  # for(i_setting in settingIndices)
+  for(i_setting in settingIndices)
   {
-    n <- simSetting[iSetting, 1]
-    nonLinFIdx <- 3 * (simSetting[iSetting, 2] - 1) + 1:3
-    interFIdx <- 3 * (simSetting[iSetting, 2] - 1) + 1:3
-    noisesd <- simSetting[iSetting, 3]
+    n <- simSetting[i_setting, 1]
+    nonLinFIdx <- 3 * (simSetting[i_setting, 2] - 1) + 1:3
+    interFIdx <- 3 * (simSetting[i_setting, 2] - 1) + 1:3
+    noisesd <- simSetting[i_setting, 3]
     SettingString <- paste("n_", n, "_Eff_",
                            paste(nonLinFIdx, collapse = "_"),
                            sep = "")
@@ -109,44 +108,44 @@ for(iOuter in 1:3)
                                        ensembleIdx = NULL)
     for(j in 1:nSim)
     {
-      resFileName <- paste("./ONAM/UniformFeatureResults_New Working/", SettingString, "_run_", j, ".RDS", sep = "")
+      resFileName <- paste("./UniformFeatureResults/", SettingString, "_run_", j, ".RDS", sep = "")
       tmpRes <- readRDS(resFileName)
       X <- tmpRes$data
       tmp_plot_data_main1 <-
         rbind(tmp_plot_data_main1,
               data.frame(x = X[,1],
-                         y = tmpRes$finalTotalPredictions[,"X1"],
+                         y = tmpRes$predictions_features[,"X1"],
                          ensembleIdx = j))
       tmp_plot_data_main2 <-
         rbind(tmp_plot_data_main2,
               data.frame(x = X[,2],
-                         y = tmpRes$finalTotalPredictions[,"X2"],
+                         y = tmpRes$predictions_features[,"X2"],
                          ensembleIdx = j))
       tmp_plot_data_main3 <-
         rbind(tmp_plot_data_main3,
               data.frame(x = X[,3],
-                         y = tmpRes$finalTotalPredictions[,"X3"],
+                         y = tmpRes$predictions_features[,"X3"],
                          ensembleIdx = j))
       tmp_plot_data_inter1 <-
         rbind(tmp_plot_data_inter1,
               data.frame(x1 = X[,1],
                          x2 = X[,2],
-                         y = tmpRes$finalTotalPredictions[,"X1_X2"],
+                         y = tmpRes$predictions_features[,"X1_X2"],
                          ensembleIdx = j))
       tmp_plot_data_inter2 <-
         rbind(tmp_plot_data_inter2,
               data.frame(x1 = X[,1],
                          x2 = X[,3],
-                         y = tmpRes$finalTotalPredictions[,"X1_X3"],
+                         y = tmpRes$predictions_features[,"X1_X3"],
                          ensembleIdx = j))
       tmp_plot_data_inter3 <-
         rbind(tmp_plot_data_inter3,
               data.frame(x1 = X[,2],
                          x2 = X[,3],
-                         y = tmpRes$finalTotalPredictions[,"X2_X3"],
+                         y = tmpRes$predictions_features[,"X2_X3"],
                          ensembleIdx = j))
     }
-    trueFileName <- paste("./ONAM/UniformFeatureResults_New Working/", (iSetting + 1) %/% 2,
+    trueFileName <- paste("./UniformFeatureResults/", (i_setting + 1) %/% 2,
                           "_TRUE.RDS", sep = "")
     # SettingString <- paste("n_", n, "_Eff_",
     #                        paste(nonLinFIdx, collapse = "_"),
@@ -162,7 +161,7 @@ for(iOuter in 1:3)
     #                                   y = trueData[,4],
     #                                   ensembleIdx = "True")
     tmp_true_data_main1 <- data.frame(x = tmpTrue$data[,"X1"],
-                                      y = tmpTrue$finalTotalPredictions[,"X1"],
+                                      y = tmpTrue$predictions_features[,"X1"],
                                       ensembleIdx = "True")
     tmp_plot_data_main1 <- tmp_plot_data_main1 %>%
       mutate(ensembleIdx = factor(ensembleIdx))
@@ -178,7 +177,7 @@ for(iOuter in 1:3)
     #                                   y = trueData[,5],
     #                                   ensembleIdx = "True")
     tmp_true_data_main2 <- data.frame(x = tmpTrue$data[,"X2"],
-                                      y = tmpTrue$finalTotalPredictions[,"X2"],
+                                      y = tmpTrue$predictions_features[,"X2"],
                                       ensembleIdx = "True")
     tmp_plot_data_main2 <- tmp_plot_data_main2 %>%
       mutate(ensembleIdx = factor(ensembleIdx))
@@ -194,7 +193,7 @@ for(iOuter in 1:3)
     #                                   y = trueData[,6],
     #                                   ensembleIdx = "True")
     tmp_true_data_main3 <- data.frame(x = tmpTrue$data[,"X3"],
-                                      y = tmpTrue$finalTotalPredictions[,"X3"],
+                                      y = tmpTrue$predictions_features[,"X3"],
                                       ensembleIdx = "True")
     tmp_plot_data_main3 <- tmp_plot_data_main3 %>%
       mutate(ensembleIdx = factor(ensembleIdx))
@@ -209,7 +208,7 @@ for(iOuter in 1:3)
     group_colors = c(rep("steelblue",nSim),"royalblue", "grey15")
     names(group_colors) <- c(as.character(1:nSim), "Mean", "True")
     group_alphas = c(rep(0.5, nSim), 1, 1)
-    plot_list_main[[2 - iSetting %% 2]][[tmp_idx]] <-
+    plot_list_main[[2 - i_setting %% 2]][[tmp_idx]] <-
       # plot_list_main[[1]][[tmp_idx]] <-
       ggplot(tmp_plot_data_main1, aes(x = x, y = y, color = ensembleIdx,
                                       alpha = ensembleIdx)) +
@@ -226,7 +225,7 @@ for(iOuter in 1:3)
       labs(color = "") +
       xlab(TeX("$X_{1}$")) +
       ylab(TeX("$f_{1}(X_{1})$"))
-    plot_list_main[[2 - iSetting %% 2]][[tmp_idx + 1]] <-
+    plot_list_main[[2 - i_setting %% 2]][[tmp_idx + 1]] <-
       # plot_list_main[[1]][[tmp_idx + 1]] <-
       ggplot(tmp_plot_data_main2, aes(x = x, y = y, color = ensembleIdx,
                                       alpha = ensembleIdx)) +
@@ -243,7 +242,7 @@ for(iOuter in 1:3)
       labs(color = "") +
       xlab(TeX("$X_{2}$")) +
       ylab(TeX("$f_{2}(X_{2})$"))
-    plot_list_main[[2 - iSetting %% 2]][[tmp_idx + 2]] <-
+    plot_list_main[[2 - i_setting %% 2]][[tmp_idx + 2]] <-
       # plot_list_main[[1]][[tmp_idx + 2]] <-
       ggplot(tmp_plot_data_main3, aes(x = x, y = y, color = ensembleIdx,
                                       alpha = ensembleIdx)) +
@@ -273,14 +272,14 @@ for(iOuter in 1:3)
     tmp_true_data_inter1 <-
       data.frame(x1 = tmpTrue$data[,"X1"],
                  x2 = tmpTrue$data[,"X2"],
-                 y = tmpTrue$finalTotalPredictions[,"X1_X2"])
+                 y = tmpTrue$predictions_features[,"X1_X2"])
     plot_data_inter1_true <-
       get_average_data_inter(tmp_true_data_inter1)
     yMin1 <- min(plot_data_inter1_mean$Prediction, plot_data_inter1_true$Prediction)
     yMax1 <- max(plot_data_inter1_mean$Prediction, plot_data_inter1_true$Prediction)
     yMean1 <- mean(c(plot_data_inter1_mean$Prediction, plot_data_inter1_true$Prediction))
     color_scale_1 <- inter_color_scale(yMin1, yMax1, yMean1)
-    plot_list_inter[[2 - iSetting %% 2]][[tmp_idx_inter]] <-
+    plot_list_inter[[2 - i_setting %% 2]][[tmp_idx_inter]] <-
       # plot_list_inter[[1]][[tmp_idx_inter]] <-
       ggplot(plot_data_inter1_mean, aes(x = x, y = y, fill = Prediction)) +
       # geom_point(size = 0.75) +
@@ -291,7 +290,7 @@ for(iOuter in 1:3)
       color_scale_1 +
       xlab(TeX("$X_{1}$")) +
       ylab(TeX("$X_{2}$"))
-    plot_list_inter[[2 - iSetting %% 2]][[tmp_idx_inter + 1]] <-
+    plot_list_inter[[2 - i_setting %% 2]][[tmp_idx_inter + 1]] <-
       # plot_list_inter[[1]][[tmp_idx_inter + 1]] <-
       ggplot(plot_data_inter1_true, aes(x = x, y = y, fill = Prediction)) +
       # geom_point(size = 0.75) +
@@ -315,14 +314,14 @@ for(iOuter in 1:3)
     tmp_true_data_inter2 <-
       data.frame(x1 = tmpTrue$data[,"X1"],
                  x2 = tmpTrue$data[,"X3"],
-                 y = tmpTrue$finalTotalPredictions[,"X1_X3"])
+                 y = tmpTrue$predictions_features[,"X1_X3"])
     plot_data_inter2_true <-
       get_average_data_inter(tmp_true_data_inter2)
     yMin2 <- min(plot_data_inter2_mean$Prediction, plot_data_inter2_true$Prediction)
     yMax2 <- max(plot_data_inter2_mean$Prediction, plot_data_inter2_true$Prediction)
     yMean2 <- mean(c(plot_data_inter2_mean$Prediction, plot_data_inter2_true$Prediction))
     color_scale_2 <- inter_color_scale(yMin2, yMax2, yMean2)
-    plot_list_inter[[2 - iSetting %% 2]][[tmp_idx_inter + 2]] <-
+    plot_list_inter[[2 - i_setting %% 2]][[tmp_idx_inter + 2]] <-
       # plot_list_inter[[1]][[tmp_idx_inter + 2]] <-
       ggplot(plot_data_inter2_mean, aes(x = x, y = y, fill = Prediction)) +
       # geom_point(size = 0.75) +
@@ -333,7 +332,7 @@ for(iOuter in 1:3)
       color_scale_2 +
       xlab(TeX("$X_{1}$")) +
       ylab(TeX("$X_{3}$"))
-    plot_list_inter[[2 - iSetting %% 2]][[tmp_idx_inter + 3]] <-
+    plot_list_inter[[2 - i_setting %% 2]][[tmp_idx_inter + 3]] <-
       # plot_list_inter[[1]][[tmp_idx_inter + 3]] <-
       ggplot(plot_data_inter2_true, aes(x = x, y = y, fill = Prediction)) +
       # geom_point(size = 0.75) +
@@ -357,14 +356,14 @@ for(iOuter in 1:3)
     tmp_true_data_inter3 <-
       data.frame(x1 = tmpTrue$data[,"X2"],
                  x2 = tmpTrue$data[,"X3"],
-                 y = tmpTrue$finalTotalPredictions[,"X2_X3"])
+                 y = tmpTrue$predictions_features[,"X2_X3"])
     plot_data_inter3_true <-
       get_average_data_inter(tmp_true_data_inter3)
     yMin3 <- min(plot_data_inter3_mean$Prediction, plot_data_inter3_true$Prediction)
     yMax3 <- max(plot_data_inter3_mean$Prediction, plot_data_inter3_true$Prediction)
     yMean3 <- mean(c(plot_data_inter3_mean$Prediction, plot_data_inter3_true$Prediction))
     color_scale_3 <- inter_color_scale(yMin3, yMax3, yMean3)
-    plot_list_inter[[2 - iSetting %% 2]][[tmp_idx_inter + 4]] <-
+    plot_list_inter[[2 - i_setting %% 2]][[tmp_idx_inter + 4]] <-
       # plot_list_inter[[1]][[tmp_idx_inter + 4]] <-
       ggplot(plot_data_inter3_mean, aes(x = x, y = y, fill = Prediction)) +
       # geom_point(size = 0.75) +
@@ -375,7 +374,7 @@ for(iOuter in 1:3)
       color_scale_3 +
       xlab(TeX("$X_{2}$")) +
       ylab(TeX("$X_{3}$"))
-    plot_list_inter[[2 - iSetting %% 2]][[tmp_idx_inter + 5]] <-
+    plot_list_inter[[2 - i_setting %% 2]][[tmp_idx_inter + 5]] <-
       # plot_list_inter[[1]][[tmp_idx_inter + 5]] <-
       ggplot(plot_data_inter3_true, aes(x = x, y = y, fill = Prediction)) +
       # geom_point(size = 0.75) +

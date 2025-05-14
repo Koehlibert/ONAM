@@ -2,13 +2,9 @@
 #Define DNN architecture for simulation
 get_submodel <- function(inputs, regularizer = NULL) {
   outputs <- inputs %>%
-    # layer_dense(units = 512, activation = "relu",
-    #             use_bias = TRUE) %>%
-    # layer_dropout(rate = 0.2) %>%
-    # layer_dense(units = 256, activation = "relu",
-    #             use_bias = TRUE,
-    #             kernel_regularizer = regularizer) %>%
-    # # layer_dropout(rate = 0.2) %>%
+    layer_dense(units = 256, activation = "relu",
+                use_bias = TRUE,
+                kernel_regularizer = regularizer) %>%
     keras::layer_dense(
       units = 128,
       activation = "relu",
@@ -23,7 +19,6 @@ get_submodel <- function(inputs, regularizer = NULL) {
       kernel_regularizer = regularizer,
       dtype = "float64"
     ) %>%
-    # layer_dropout(rate = 0.2) %>%
     keras::layer_dense(
       units = 32,
       activation = "relu",
@@ -31,7 +26,6 @@ get_submodel <- function(inputs, regularizer = NULL) {
       kernel_regularizer = regularizer,
       dtype = "float64"
     ) %>%
-    # layer_dropout(rate = 0.2) %>%
     keras::layer_dense(
       units = 16,
       activation = "relu",

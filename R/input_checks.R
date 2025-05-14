@@ -95,15 +95,15 @@ check_inputs_plot <- function(object, effect, interaction = 0) {
 #check inputs of model fitting call
 #' @keywords internal
 check_inputs_onam <- function(inputs) {
-  if (!is(formula, "formula")) {
+  if (!inherits(inputs$formula, "formula")) {
     stop("Parameter `formula` must be a formula object of the kind `y~x`.",
          call. = FALSE)
   }
   if (!is.list(inputs$list_of_deep_models) |
       is.null(names(inputs$list_of_deep_models)) |
-      any(lapply(inputs$list_of_deep_models, function(x) {
-        !is(x, "function")
-      }))) {
+      any(unlist(lapply(inputs$list_of_deep_models, function(x) {
+        !inherits(x, "function")
+      })))) {
     stop("Parameter `list_of_deep_models` must be a named list of DNN architectures.",
          call. = FALSE)
   }
@@ -115,12 +115,15 @@ check_inputs_onam <- function(inputs) {
     stop("Parameter `target` must be either `continuous` or `binary`.",
          call. = FALSE)
   }
-  if (!is.integer(inputs$n_ensemble) | inputs$n_ensemble < 0) {
-    stop("Parameter `n_ensemble` must be a positive integer.")
+  if (!(inputs$n_ensemble %% 1 == 0) | inputs$n_ensemble < 0) {
+    stop("Parameter `n_ensemble` must be a positive integer.",
+         call. = FALSE)
   }
-  if (!is.integer(inputs$epochs) | inputs$epochs < 0) {
-    stop("Parameter `epochs` must be a positive integer.")
+  if (!(inputs$epochs %% 1 == 0) | inputs$epochs < 0) {
+    stop("Parameter `epochs` must be a positive integer.",
+         call. = FALSE)
   }
   if(is.na(as.logical(inputs$progresstext)))
-    stop("Parameter `progresstext` must be `TRUE` or `FALSE`.")
+    stop("Parameter `progresstext` must be `TRUE` or `FALSE`.",
+         call. = FALSE)
 }
