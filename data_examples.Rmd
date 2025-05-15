@@ -25,10 +25,11 @@ library(devtools)
 devtools::install_github("Koehlibert/ONAM")
 ```
 If this is the first time using keras or tensorflow in R, you need to run `keras::install_keras()`.
-## Fit model on Chesapeake Bay watershed biotic integrity dataset
+## Random forest for Chesapeake Bay watershed biotic integrity prediction
 Load data and setup model architecture
 ``` {r model setup, echo = TRUE, results = "hide"}
 library(keras)
+library(dplyr)
 library(readxl)
 library(ONAM)
 #load data
@@ -73,7 +74,7 @@ list_of_deep_models_BIBI <- list(deep_model = ONAM:::get_submodel)
 categorical_features <- c("BioregUpstream2")
 ```
 
-```{r, fit ONAM model, echo = TRUE, results = "hide"}
+```{r, fit ONAM model, echo = TRUE, results = "hide", eval = FALSE}
 #Fit PHONAM model
 BIBIExpl <-
   onam(
@@ -84,18 +85,20 @@ BIBIExpl <-
     n_ensemble = 2,
     epochs = 100,
     progresstext = FALSE,
-    verbose = 1
+    verbose = 0
   )
 #generate prediction object for saving
 BIBI_Res <- predict(BIBIExpl)
 saveRDS(BIBI_Res, "BIBI_Res.RDS")
 ```
 # Model visualization
-```{r model summary, echo = TRUE}
+```{r model summary, echo = TRUE, eval = FALSE}
 summary(BIBIExpl)
 ```
 
 ```{r effect plots, echo = TRUE}
+readRDS("BIBI_Res.RDS")
+
 plot_main_effect(BIBI_Res, "Forest")
 plot_main_effect(BIBI_Res, "Development")
 plot_main_effect(BIBI_Res, "Barren")
@@ -104,5 +107,78 @@ plot_main_effect(BIBI_Res, "upstream.total_precip")
 plot_inter_effect(BIBI_Res, "Development", "Agriculture", interpolate = TRUE)
 plot_inter_effect(BIBI_Res, "Agriculture", "elevation", interpolate = TRUE)
 plot_inter_effect(BIBI_Res, "Development", "elevation", interpolate = TRUE)
+```
+
+## Binary classification support vector machine for diabetes prediction
+The Pima Indians Diabetes Database is a dataset from the Indian National Institute of Diabetes and Digestive and Kidney Dieseases. 
+https://www.mdpi.com/2076-3417/9/21/4604
+
+```{r}
+library(mlbench)
+library(e1071)
+library(caret)
+data(PimaIndiansDiabetes)
+diabetes_data <- PimaIndiansDiabetes %>%
+  mutate(diabetes = as.factor(ifelse(diabetes == "pos", 1, 0))) %>%
+  mutate(across(!diabetes, as.numeric))
+
+head(diabetes_data)
+```
+It consists of `r nrow(diabetes_data)` instances of multiple medical features and the diabetes status of each observation. There are `r sum(diabetes_data$diabetes)` diabetes cases and `r sum(diabetes_data$diabetes == 0)` controls in the dataset.
+
+We demonstrate how to use ONAM to explain the prediction of a support vector machine for prediction of the diabetes status.
+
+First, we fit a support vector machine with radial kernel. Hyperparameters are selected using grid search.
+
+```{r Diabetes svm}
+# Define a grid of parameters to search
+tune_grid <- expand.grid(C = c(0.1, 1, 10), sigma = c(0.5, 1))
+
+# Train the model using cross-validation
+svm_tuned <- train(diabetes ~ ., data = diabetes_data, 
+                   method = "svmRadial",
+                   trControl = trainControl(method = "cv", number = 10),
+                   tuneGrid = tune_grid)
+svm_best_params <- svm_tuned$bestTune
+svm_mod <- svm(diabetes ~ ., data = diabetes_data, kernel = "radial",
+               cost = svm_best_params$C,
+               sigma = svm_best_params$sigma)
+svm_accuracy <- 
+  sum(predict(svm_mod, diabetes_data) ==
+        diabetes_data$diabetes)/nrow(train)
+summary(svm_mod)
+```
+Model accuracy: `r svm_accuracy`
+
+# Fit ONAM model on svm data
+
+We explain the svm using the orthogonal additive model framework:
+
+```{r}
+f1 <- diabetes ~ mod(glucose) + mod(insulin) + mod(pregnant) + mod(pressure) +
+  mod(triceps) + mod(pedigree) +
+  mod(mass) + mod(age) +
+  mod(glucose, insulin) + mod(age, mass) + mod(.)
+list_of_deep_models <- list(mod = ONAM:::get_submodel)
+svm_expl <- onam(f1, list_of_deep_models, train,
+            svm_mod,
+            target = "binary", n_ensemble = 2,
+            epochs = 200, verbose = 1)
+summary(svm_expl)
+
+#generate prediction object for saving
+svm_res <- predict(svm_expl)
+saveRDS(svm_res, "svm_res.RDS")
+```
+
+
+
+```{r svm diabetes plots}
+readRDS("svm_res.RDS")
+
+plot_main_effect(svm_res, "insulin")
+plot_main_effect(svm_res, "mass")
+
+plot_inter_effect(svm_res, "age", "mass", interpolate = FALSE)
 ```
 
