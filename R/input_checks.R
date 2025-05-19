@@ -22,7 +22,7 @@ check_inputs_formula <-
       return(as.character(x[-1]))
     })
     features <- unlist(features_ls)
-    all_symbols <- c(outcome_var, features)
+    all_symbols <- c(features)
     missing_features <-
       all_symbols[which(!all_symbols %in% feature_names)]
     if (length(missing_features)) {

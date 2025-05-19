@@ -14,6 +14,9 @@
 #' @param prediction_function Prediction function to be used to generate the
 #' outcome. Only used if `model` is specified. If `NULL`(default), S3-method
 #' based on the `model`argument is used.
+#' @param model_data Data used for generating predictions of `model`. Necessary
+#' for some models that require specific data formats, i.e. xgboost.
+#' If `NULL`(default), `data` is used. Only used if `model` is specified.
 #' @param categorical_features Vector of feature names of categorical features.
 #' @param target Target of prediction task. Can be either "continuous" or
 #' "binary". For "continuous"(default), an additive model for the prediction of
@@ -61,6 +64,7 @@ onam <- function(formula,
                  data,
                  model = NULL,
                  prediction_function = NULL,
+                 model_data = NULL,
                  categorical_features = NULL,
                  target = "continuous",
                  n_ensemble = 20,
@@ -78,60 +82,7 @@ onam <- function(formula,
               categorical_features)
   cat_counts <- get_category_counts(categorical_features,
                                     data)
-  if (!is.null(model)) {
-    if (is.null(prediction_function)) {
-      for (tmp_class in class(model)) {
-        prediction_function <-
-          utils::getS3method("predict", tmp_class, optional = TRUE)
-        if (!is.null(prediction_function))
-          break
-      }
-      if (is.null(prediction_function)) {
-        stop(
-          paste0(
-            "Model of class ",
-            class(model),
-            " supplied without `prediction_function`, but no S3 method for class ",
-            class(model),
-            "exists. Please specify a prediction function that returns a vector of predictions."
-          ),
-          call. = FALSE
-        )
-      }
-    }
-    y <- prediction_function(model, data)
-    if (class(y) == "factor") {
-      if (is.null(target)) {
-        warning("Prediction function supplied factor. Binary outcome is assumed.")
-        target <- "binary"
-        y <- as.numeric(as.character(y))
-      } else if (target != "binary") {
-        stop(
-          paste0(
-            "Prediction function supplied factor, but target was supplied as ",
-            target,
-            "."
-          ),
-          call. = FALSE
-        )
-      } else {
-        y <- as.numeric(as.character(y))
-      }
-    }
-    if (!is.vector(y)) {
-      stop(
-        "Prediction function does not return an appropriate outcome. Please specify a prediction function that returns a vector of predictions.",
-        call. = FALSE
-      )
-    }
-
-  } else {
-    y <- data[, which(colnames(data) ==
-                        as.character(model_info$outcome))]
-  }
-  # if (!is.matrix(data)) {
-  #   data <- as.matrix(data)
-  # }
+  y <- get_output(model, prediction_function, model_data, data, target, model_info)
   data_fit <-
     prepare_data(data, model_info, categorical_features)
   ensemble <- list()

@@ -10,7 +10,12 @@ output:
   highlight: tango
   toc_depth: 3
 ---
-Code to reproduce results from Köhler, Rügamer and Schmid \(2024\):
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+Code to reproduce results from Köhler, Rügamer and Schmid (2024):
 
 https://arxiv.org/abs/2407.18650
 
@@ -25,65 +30,49 @@ library(devtools)
 devtools::install_github("Koehlibert/ONAM")
 ```
 If this is the first time using keras or tensorflow in R, you need to run `keras::install_keras()`.
-## Random forest for Chesapeake Bay watershed biotic integrity prediction
+
+# Random forest for Chesapeake Bay watershed biotic integrity prediction
+
 Load data and setup model architecture
-``` {r model setup, echo = TRUE, results = "hide"}
+``` {r model setup, echo = TRUE}
 library(keras)
 library(dplyr)
 library(readxl)
 library(ONAM)
 #load data
 trainData <- read_xlsx("BIBITrain.xlsx")
-#define model formula
-BIBIformula <-
-  Prediction ~ deep_model(Latitude) + deep_model(Longitude) +
-  deep_model(BioregUpstream2) + deep_model(AreaSqKM) +
-  deep_model(dep_so4_2011) + deep_model(elevation) +
-  deep_model(hydrogroup_d4) + deep_model(percent_sandy) +
-  deep_model(surfcoarse) + deep_model(deg_barr_all_local) +
-  deep_model(upstream.total_precip) + deep_model(Agriculture) +
-  deep_model(Development) + deep_model(Forest) + deep_model(Openwater) +
-  deep_model(Barren) + deep_model(Grass) + deep_model(Woodywetland) +
-  deep_model(Herbwetland) +
-  deep_model(Development, elevation) +
-  deep_model(Agriculture, elevation) +
-  deep_model(Agriculture, Development) +
-  deep_model(
-    Latitude,
-    Longitude,
-    BioregUpstream2,
-    AreaSqKM,
-    dep_so4_2011,
-    elevation,
-    hydrogroup_d4,
-    percent_sandy,
-    surfcoarse,
-    deg_barr_all_local,
-    Openwater,
-    Barren,
-    upstream.total_precip,
-    Agriculture,
-    Development,
-    Forest,
-    Grass,
-    Woodywetland,
-    Herbwetland
-  )
-#Specify model architecture in a named list where the name corresponds to the model name in the model formula
-list_of_deep_models_BIBI <- list(deep_model = ONAM:::get_submodel)
-categorical_features <- c("BioregUpstream2")
+head(trainData)
 ```
 
-```{r, fit ONAM model, echo = TRUE, results = "hide", eval = FALSE}
+```{r, fit ONAM model, echo = TRUE, results = "hide", eval = TRUE}
+#define model formula
+BIBI_formula <-
+  Prediction ~ mod(Latitude) + mod(Longitude) +
+  mod(BioregUpstream2) + mod(AreaSqKM) +
+  mod(dep_so4_2011) + mod(elevation) +
+  mod(hydrogroup_d4) + mod(percent_sandy) +
+  mod(surfcoarse) + mod(deg_barr_all_local) +
+  mod(upstream.total_precip) + mod(Agriculture) +
+  mod(Development) + mod(Forest) + mod(Openwater) +
+  mod(Barren) + mod(Grass) + mod(Woodywetland) +
+  mod(Herbwetland) +
+  mod(Development, elevation) +
+  mod(Agriculture, elevation) +
+  mod(Agriculture, Development) +
+  mod(.)
+#Specify model architecture in a named list where the name corresponds to the model name in the model formula
+list_of_mods_BIBI <- list(mod = ONAM:::get_submodel)
+categorical_features <- c("BioregUpstream2")
 #Fit PHONAM model
+trainData <- as.matrix(trainData)
 BIBIExpl <-
   onam(
-    BIBIformula,
-    list_of_deep_models_BIBI,
+    BIBI_formula,
+    list_of_mods_BIBI,
     categorical_features = categorical_features,
     trainData,
-    n_ensemble = 2,
-    epochs = 100,
+    n_ensemble = 4,
+    epochs = 500,
     progresstext = FALSE,
     verbose = 0
   )
@@ -91,13 +80,13 @@ BIBIExpl <-
 BIBI_Res <- predict(BIBIExpl)
 saveRDS(BIBI_Res, "BIBI_Res.RDS")
 ```
-# Model visualization
-```{r model summary, echo = TRUE, eval = FALSE}
+## Model visualization
+```{r model summary, echo = TRUE, eval = TRUE}
 summary(BIBIExpl)
 ```
 
 ```{r effect plots, echo = TRUE}
-readRDS("BIBI_Res.RDS")
+BIBI_res <- readRDS("BIBI_Res.RDS")
 
 plot_main_effect(BIBI_Res, "Forest")
 plot_main_effect(BIBI_Res, "Development")
@@ -109,11 +98,11 @@ plot_inter_effect(BIBI_Res, "Agriculture", "elevation", interpolate = TRUE)
 plot_inter_effect(BIBI_Res, "Development", "elevation", interpolate = TRUE)
 ```
 
-## Binary classification support vector machine for diabetes prediction
+# Binary classification support vector machine for diabetes prediction
 The Pima Indians Diabetes Database is a dataset from the Indian National Institute of Diabetes and Digestive and Kidney Dieseases. 
 https://www.mdpi.com/2076-3417/9/21/4604
 
-```{r}
+```{r load diabetes data}
 library(mlbench)
 library(e1071)
 library(caret)
@@ -124,13 +113,13 @@ diabetes_data <- PimaIndiansDiabetes %>%
 
 head(diabetes_data)
 ```
-It consists of `r nrow(diabetes_data)` instances of multiple medical features and the diabetes status of each observation. There are `r sum(diabetes_data$diabetes)` diabetes cases and `r sum(diabetes_data$diabetes == 0)` controls in the dataset.
+It consists of `r nrow(diabetes_data)` instances of multiple medical features and the diabetes status of each observation. There are `r sum(diabetes_data$diabetes == 1)` diabetes cases and `r sum(diabetes_data$diabetes == 0)` controls in the dataset.
 
 We demonstrate how to use ONAM to explain the prediction of a support vector machine for prediction of the diabetes status.
 
 First, we fit a support vector machine with radial kernel. Hyperparameters are selected using grid search.
 
-```{r Diabetes svm}
+```{r Diabetes svm, echo = TRUE}
 # Define a grid of parameters to search
 tune_grid <- expand.grid(C = c(0.1, 1, 10), sigma = c(0.5, 1))
 
@@ -145,40 +134,115 @@ svm_mod <- svm(diabetes ~ ., data = diabetes_data, kernel = "radial",
                sigma = svm_best_params$sigma)
 svm_accuracy <- 
   sum(predict(svm_mod, diabetes_data) ==
-        diabetes_data$diabetes)/nrow(train)
+        diabetes_data$diabetes)/nrow(diabetes_data)
 summary(svm_mod)
 ```
-Model accuracy: `r svm_accuracy`
 
-# Fit ONAM model on svm data
+Model accuracy: `r round(svm_accuracy, 4)`
 
-We explain the svm using the orthogonal additive model framework:
+## Fit ONAM model on svm data
 
-```{r}
-f1 <- diabetes ~ mod(glucose) + mod(insulin) + mod(pregnant) + mod(pressure) +
-  mod(triceps) + mod(pedigree) +
-  mod(mass) + mod(age) +
-  mod(glucose, insulin) + mod(age, mass) + mod(.)
-list_of_deep_models <- list(mod = ONAM:::get_submodel)
-svm_expl <- onam(f1, list_of_deep_models, train,
-            svm_mod,
-            target = "binary", n_ensemble = 2,
-            epochs = 200, verbose = 1)
-summary(svm_expl)
+We explain the svm using the orthogonal additive model framework for binary classification:
+
+```{r diabetes onam model}
+Diabetes_formula <- diabetes ~ mod(glucose) + mod(insulin) + 
+  mod(pregnant) + mod(pressure) + mod(triceps) + mod(pedigree) +
+  mod(mass) + mod(age) + mod(glucose, insulin) + mod(age, mass) + 
+  mod(.)
+list_of_mods_Diabetes <- list(mod = ONAM:::get_submodel)
+svm_expl <- onam(Diabetes_formula, list_of_mods_Diabetes,
+                 diabetes_data, svm_mod, target = "binary", n_ensemble = 4,
+                 epochs = 500, verbose = 0)
+# summary(svm_expl)
 
 #generate prediction object for saving
 svm_res <- predict(svm_expl)
 saveRDS(svm_res, "svm_res.RDS")
 ```
 
-
-
 ```{r svm diabetes plots}
-readRDS("svm_res.RDS")
+svm_res <- readRDS("svm_res.RDS")
 
 plot_main_effect(svm_res, "insulin")
 plot_main_effect(svm_res, "mass")
 
 plot_inter_effect(svm_res, "age", "mass", interpolate = FALSE)
+```
+
+# Binary classification of insurance claims using xgboost
+
+The `r "dataCar"` dataset from the `r "insuranceData"`-package contains data on one-year vehicle insurance policies taken out in 2004 and 2005.
+
+```{r load car data}
+library(insuranceData)
+library(xgboost)
+library(dplyr)
+library(caret)
+data("dataCar")
+dataCar_subset <- dataCar %>%
+  select(veh_value, veh_body, veh_age, gender, area, agecat, clm) %>%
+  mutate_all(as.numeric)
+
+head(dataCar_subset)
+```
+
+The dataset contains `r nrow(dataCar)` policies, `r sum(dataCar$clm)` of which had at least one insurance claim. We use xgboost to fit a binary prediction model to predict if an insurance claim is made.
+
+```{r fit xgboost model}
+dataCar_train <- dataCar_subset[sample(1:nrow(dataCar_subset), 10000),]
+
+train_insurance <- dataCar_train %>% select(-clm)
+label_insurance <- dataCar_train %>% select(clm) %>% unlist()
+
+xgb_train_insurance <- xgb.DMatrix(as.matrix(train_insurance),
+                                   label = label_insurance)
+
+xgb_mod <- xgboost(xgb_train_insurance, nrounds = 10000, verbose = 0,
+                   # print_every_n = 100,
+                   objective = "binary:logistic",
+                   eval_metric = "logloss")
+summary(xgb_mod)
+preds <- as.numeric(predict(xgb_mod, xgb_train_insurance) > 0.5)
+
+confusionMatrix(as.factor(preds), as.factor(unlist(label_insurance)))
+```
+
+## Fit ONAM model on xgboost data
+
+We explain the xgboost using the orthogonal additive model framework for binary classification:
+
+```{r onam insurance, echo = TRUE}
+Insurance_formula <- clm ~ mod(veh_value) + mod(veh_body) + mod(veh_age) +
+  mod(gender) + mod(area) + mod(agecat) + mod(veh_age, veh_value) +
+  mod(.)
+
+list_of_deep_models_Insurance <- list(mod = ONAM:::get_submodel)
+
+categorical_features <- c("veh_body", "agecat", "area", "gender")
+
+xgb_expl <-
+  onam(
+    Insurance_formula,
+    list_of_deep_models_Insurance,
+    train_insurance,
+    target = "binary",
+    model = xgb_mod,
+    model_data = xgb_train_insurance,
+    categorical_features = categorical_features,
+    n_ensemble = 4,
+    epochs = 500,
+    verbose = 0
+  )
+
+xgb_res <- predict(xgb_expl)
+saveRDS(xgb_res, "xgb_res.RDS")
+```
+
+```{r load and plot xgb onam model}
+xgb_res <- readRDS("xgb_res.RDS")
+
+plot_main_effect(xgb_expl, "area")
+plot_main_effect(xgb_expl, "veh_value")
+plot_inter_effect(xgb_expl, "veh_age", "veh_value")
 ```
 
