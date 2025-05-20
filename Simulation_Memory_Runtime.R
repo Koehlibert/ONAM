@@ -7,8 +7,8 @@ library(bench)
 source("SimulationSettings.R")
 n_big <- 50000
 n_sim <- 10
-p_vals <- c(10, 50, 100)
-p_inf_vals <- c(3, 20, 50)
+p_vals <- c(10, 25, 50, 100)
+p_inf_vals <- c(3, 10, 20, 50)
 n_inter_vals <- p_inf_vals
 n_vals <- c(2000, 5000, 10000)
 sim_setting <- expand.grid(1:3, n_vals)
@@ -55,9 +55,9 @@ sim_fct <- function(i) {
   ))
   list_of_deep_models =
     list(mod = ONAM:::get_submodel)
-  callback <-
-    keras::keras$callbacks$EarlyStopping(monitor = "loss",
-                                         patience = 20)
+  # callback <-
+  #   keras::keras$callbacks$EarlyStopping(monitor = "loss",
+  #                                        patience = 20)
   benchmark <-
     mark(
       onam(
@@ -65,10 +65,10 @@ sim_fct <- function(i) {
         list_of_deep_models,
         train_data,
         n_ensemble = 1,
-        epochs = 500,
-        callback = callback,
+        epochs = 200,
+        # callback = callback,
         progresstext = FALSE,
-        verbose = 1
+        verbose = 0
       ),
       iterations = 1,
       check = FALSE
@@ -77,3 +77,6 @@ sim_fct <- function(i) {
     benchmark$median,
     benchmark$mem_alloc)
 }
+res <- sapply(seq_len(nrow(sim_setting)),
+              sim_fct)
+saveRDS(res, "Benchmarking_results.RDS")
