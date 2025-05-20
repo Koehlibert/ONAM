@@ -116,9 +116,8 @@ plot_inter_effect <- function(object,
     eff <- object$outputs_post_ensemble[, inter]
   }
   if (interpolate) {
-    if (!requireNamespace("akima", quietly = TRUE)) {
-      stop("Package \"akima\" must be installed for interpolation.",
-           call. = FALSE)
+    if (any(c(effect1, effect2) %in% object$model_info$categorical_features)) {
+      warning("Interaction contains categorical feature. No Interpolation will be performed.")
     }
     tmp_interp <-
       akima::interp(
@@ -212,6 +211,8 @@ plot_main_categorical <- function(data_plot) {
       label = x,
       vjust = 0.5 + 0.75 * sign(y)
     )) +
-    ggplot2::theme(axis.text.x = ggplot2::element_blank(),
-                   axis.ticks.x = ggplot2::element_blank())
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.ticks.x = ggplot2::element_blank()
+    )
 }
