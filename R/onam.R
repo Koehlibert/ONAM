@@ -79,10 +79,17 @@ onam <- function(formula,
     get_theta(formula,
               list_of_deep_models,
               feature_names,
-              categorical_features)
+              categorical_features,
+              target)
   cat_counts <- get_category_counts(categorical_features,
                                     data)
-  y <- get_output(model, prediction_function, model_data, data, target, model_info)
+  y <-
+    get_output(model,
+               prediction_function,
+               model_data,
+               data,
+               target,
+               model_info)
   data_fit <-
     prepare_data(data, model_info, categorical_features)
   ensemble <- list()
@@ -179,17 +186,25 @@ onam <- function(formula,
 summary.onam <- function(object, ...) {
   prediction <- rowSums(object$outputs_post_ensemble)
   var_decomp <- decompose(object)$var_decomp
+  total_pred <- rowSums(object$outputs_post_ensemble)
+  convergence_metric <-
+    if (object$model_info$target == "continuous") {
+      stats::cor(total_pred,
+                 object$data[, as.character(object$model_info$outcome)])
+    } else {
+      pROC::auc(object$data[, as.character(object$model_info$outcome)],
+                total_pred)
+    }
   res <- list(
     call = object$call,
-    # input = object$input,
     n_ensemble = length(object$ensemble),
-    cor = stats::cor(rowSums(object$outputs_post_ensemble),
-                     object$data[, as.character(object$model_info$outcome)]),
+    conv_metric = convergence_metric,
     i_1 = var_decomp["1"],
     i_2 = var_decomp["2"],
     degree_expl = sum(var_decomp[c("1", "2")])
   )
   class(res) <- "summary.onam"
+  attr(res, "target") <- object$model_info$target
   res
 }
 
@@ -208,9 +223,15 @@ print.summary.onam <- function(x, ...) {
   # } else {
   #   lapply(x$input, function(input) cat("\n", as.character(input)))
   # }
-  cat("\nCorrelation of model prediction with outcome variable: ",
-      round(x$cor, 4),
-      sep = "")
+  if (attr(res, "target") == "continuous") {
+    cat("\nCorrelation of model prediction with outcome variable: ",
+        round(x$conv_metric, 4),
+        sep = "")
+  } else {
+    cat("\nPrediction AUC: ",
+        round(x$conv_metric, 4),
+        sep = "")
+  }
   cat("\nNumber of ensemble members: ", x$n_ensemble)
   cat("\nI_1: ",
       round(x$i_1, digits = 4),

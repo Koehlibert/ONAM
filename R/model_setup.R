@@ -2,19 +2,18 @@
 #Define DNN architecture for simulation
 get_submodel <- function(inputs, regularizer = NULL) {
   outputs <- inputs %>%
-    layer_dense(
-      units = 256,
-      activation = "relu",
-      use_bias = TRUE,
-      kernel_regularizer = regularizer
-    ) %>%
+    # layer_dense(
+    #   units = 256,
+    #   activation = "relu",
+    #   use_bias = TRUE,
+    #   kernel_regularizer = regularizer
+    # ) %>%
     keras::layer_dense(
       units = 128,
       activation = "relu",
       use_bias = TRUE,
       kernel_regularizer = regularizer
     ) %>%
-    keras::layer_dropout(rate = 0.2) %>%
     keras::layer_dense(
       units = 64,
       activation = "relu",
@@ -75,7 +74,8 @@ get_theta <-
   function(model_formula,
            list_of_deep_models,
            feature_names,
-           categorical_features) {
+           categorical_features,
+           target) {
     #Separate Symbols
     theta_list <- lapply(model_formula, find_symbol)
     outcome_var <- theta_list[[2]][[1]]
@@ -200,7 +200,8 @@ get_theta <-
     list(theta = theta,
          name_models = model_list,
          categorical_features = categorical_features,
-         outcome = outcome_var)
+         outcome = outcome_var,
+         target = target)
   }
 #help function to detect symbols
 find_symbol <- function(list_current) {

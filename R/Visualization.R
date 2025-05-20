@@ -38,9 +38,13 @@ plot_main_effect <- function(object, effect) {
       data.frame(x = object$data[, effect],
                  y = object$outputs_post_ensemble[, effect])
   }
-
-  ggplot2::ggplot(data_plot, ggplot2::aes(x = x, y = y)) +
-    ggplot2::geom_point() + ggplot2::ylab("Effect") +
+  if (effect %in% object$categorical_features) {
+    plt <- plot_main_categorical(data_plot)
+  } else {
+    plt <- ggplot2::ggplot(data_plot, ggplot2::aes(x = x, y = y)) +
+      ggplot2::geom_point()
+  }
+  plt + ggplot2::ylab(eff_label_helper(object$model_info$target)) +
     ggplot2::xlab(effect)
 }
 #' Plot Interaction Effect
@@ -145,7 +149,7 @@ plot_inter_effect <- function(object,
         guide = "colorbar",
         limits = c(min(data_plot$prediction),
                    max(data_plot$prediction)),
-        name = "Effect"
+        name = eff_label_helper(object$model_info$target)
       )
     geom_param <- ggplot2::geom_tile()
     aes_param <- ggplot2::aes(x = x, y = y, fill = prediction)
@@ -167,7 +171,7 @@ plot_inter_effect <- function(object,
         guide = "colorbar",
         limits = c(min(data_plot$prediction),
                    max(data_plot$prediction)),
-        name = "Effect"
+        name = eff_label_helper(object$model_info$target)
       )
     geom_param <- ggplot2::geom_point()
     prediction <- NULL #remove cmd check note
@@ -187,4 +191,27 @@ plot_inter_effect <- function(object,
     aes_gradient +
     inter_theme +
     ggplot2::ylab(effect1) + ggplot2::xlab(effect2)
+}
+eff_label_helper <- function(target) {
+  if (target == "continuous") {
+    "Effect"
+  } else if (target == "binary") {
+    "Effect on logit scale"
+  }
+}
+plot_main_categorical <- function(data_plot) {
+  x_uq <- unique(data_plot$x)
+  y_uq <- unique(data_plot$y)
+  data_plot_categ <-
+    data.frame(x = x_uq,
+               y = y_uq)
+  ggplot2::ggplot(data_plot_categ, ggplot2::aes(x = x, y = y)) +
+    geom_bar(stat = "identity") +
+    geom_text(ggplot2::aes(
+      y = 0,
+      label = x,
+      vjust = 0.5 + 0.75 * sign(y)
+    )) +
+    ggplot2::theme(axis.text.x = ggplot2::element_blank(),
+                   axis.ticks.x = ggplot2::element_blank())
 }
