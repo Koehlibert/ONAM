@@ -223,7 +223,7 @@ print.summary.onam <- function(x, ...) {
   # } else {
   #   lapply(x$input, function(input) cat("\n", as.character(input)))
   # }
-  if (attr(res, "target") == "continuous") {
+  if (attr(x, "target") == "continuous") {
     cat("\nCorrelation of model prediction with outcome variable: ",
         round(x$conv_metric, 4),
         sep = "")

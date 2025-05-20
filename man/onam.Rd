@@ -10,6 +10,7 @@ onam(
   data,
   model = NULL,
   prediction_function = NULL,
+  model_data = NULL,
   categorical_features = NULL,
   target = "continuous",
   n_ensemble = 20,
@@ -34,6 +35,10 @@ returned from \code{prediction_function(model)} will be used as model output. If
 \item{prediction_function}{Prediction function to be used to generate the
 outcome. Only used if \code{model} is specified. If \code{NULL}(default), S3-method
 based on the \code{model}argument is used.}
+
+\item{model_data}{Data used for generating predictions of \code{model}. Necessary
+for some models that require specific data formats, i.e. xgboost.
+If \code{NULL}(default), \code{data} is used. Only used if \code{model} is specified.}
 
 \item{categorical_features}{Vector of feature names of categorical features.}
 
@@ -82,8 +87,8 @@ model_formula <- y ~ mod1(x1) + mod1(x2) +
 list_of_deep_models <- list(mod1 = ONAM:::get_submodel)
 # Fit model
 callback <-
-keras::keras$callbacks$EarlyStopping(monitor = "loss",
-                                     patience = 10)
+  keras::keras$callbacks$EarlyStopping(monitor = "loss",
+                                       patience = 10)
 mod <- onam(model_formula, list_of_deep_models,
                    data_train, n_ensemble = 2, epochs = 10,
                    callback = callback,

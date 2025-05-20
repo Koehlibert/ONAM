@@ -206,8 +206,8 @@ plot_main_categorical <- function(data_plot) {
     data.frame(x = x_uq,
                y = y_uq)
   ggplot2::ggplot(data_plot_categ, ggplot2::aes(x = x, y = y)) +
-    geom_bar(stat = "identity") +
-    geom_text(ggplot2::aes(
+    ggplot2::geom_bar(stat = "identity") +
+    ggplot2::geom_text(ggplot2::aes(
       y = 0,
       label = x,
       vjust = 0.5 + 0.75 * sign(y)

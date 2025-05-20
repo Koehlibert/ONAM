@@ -431,7 +431,7 @@ get_output <-
         model_data <- data
       }
       y <- prediction_function(model, model_data)
-      if (class(y) == "factor") {
+      if (is(y, "factor")) {
         if (is.null(target)) {
           warning("Prediction function supplied factor. Binary outcome is assumed.")
           target <- "binary"
