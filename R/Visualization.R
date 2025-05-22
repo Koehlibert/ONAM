@@ -87,6 +87,11 @@ plot_inter_effect <- function(object,
                               interpolate = FALSE,
                               custom_colors = "spectral",
                               n_interpolate = 200) {
+  n_cat_effs <- sum(c(effect1, effect2) %in%
+                      object$model_info$categorical_features)
+  if ((n_cat_effs > 0) & interpolate) {
+    warning("Interaction contains categorical feature. No Interpolation will be performed.")
+  }
   inter <- paste(effect1, effect2, sep = "_")
   if (!is.null(check_inputs_plot(object, inter, interaction = 1))) {
     inter <- paste(effect2, effect1, sep = "_")
@@ -104,6 +109,8 @@ plot_inter_effect <- function(object,
     effect1 <- effect2
     effect2 <- tmp
   }
+  tmp_xlab <- ggplot2::xlab(effect2)
+  tmp_ylab <- ggplot2::ylab(effect1)
   if (typeof(custom_colors) != "closure") {
     if (custom_colors == "spectral") {
       custom_colors <-
@@ -115,10 +122,7 @@ plot_inter_effect <- function(object,
   } else if (inherits(object, "onam")) {
     eff <- object$outputs_post_ensemble[, inter]
   }
-  if (interpolate) {
-    if (any(c(effect1, effect2) %in% object$model_info$categorical_features)) {
-      warning("Interaction contains categorical feature. No Interpolation will be performed.")
-    }
+  if (interpolate & (n_cat_effs == 0)) {
     tmp_interp <-
       akima::interp(
         x = object$data[, effect1],
@@ -174,7 +178,21 @@ plot_inter_effect <- function(object,
       )
     geom_param <- ggplot2::geom_point()
     prediction <- NULL #remove cmd check note
-    aes_param <- ggplot2::aes(x = x, y = y, color = prediction)
+    if (n_cat_effs == 1) {
+      tmp_ylab <- ggplot2::ylab(eff_label_helper(object$model_info$target))
+      if(effect1 %in% object$model_info$categorical_features) {
+        aes_gradient <- ggplot2::scale_color_discrete(name = effect1)
+        data_plot$x <- as.factor(data_plot$x)
+        aes_param <- ggplot2::aes(x = y, y = prediction, color = x)
+      } else {
+        aes_gradient <- ggplot2::scale_color_discrete(name = effect2)
+        data_plot$y <- as.factor(data_plot$y)
+        tmp_xlab <- ggplot2::xlab(effect1)
+        aes_param <- ggplot2::aes(x = x, y = prediction, color = y)
+      }
+    } else {
+      aes_param <- ggplot2::aes(x = x, y = y, color = prediction)
+    }
   }
   inter_theme <- ggplot2::theme(
     plot.title.position = "plot",
@@ -189,7 +207,7 @@ plot_inter_effect <- function(object,
     geom_param +
     aes_gradient +
     inter_theme +
-    ggplot2::ylab(effect1) + ggplot2::xlab(effect2)
+    tmp_xlab + tmp_ylab
 }
 eff_label_helper <- function(target) {
   if (target == "continuous") {

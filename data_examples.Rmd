@@ -44,7 +44,7 @@ trainData <- read_xlsx("BIBITrain.xlsx")
 head(trainData)
 ```
 
-```{r, fit ONAM model, echo = TRUE, results = "hide", eval = TRUE}
+```{r, fit ONAM model, echo = TRUE, results = "hide", eval = FALSE}
 #define model formula
 BIBI_formula <-
   Prediction ~ mod(Latitude) + mod(Longitude) +
@@ -71,26 +71,26 @@ BIBIExpl <-
     list_of_mods_BIBI,
     categorical_features = categorical_features,
     trainData,
-    n_ensemble = 4,
+    n_ensemble = 20,
     epochs = 500,
     progresstext = FALSE,
     verbose = 0
   )
+summary(BIBIExpl)
 #generate prediction object for saving
 BIBI_Res <- predict(BIBIExpl)
 saveRDS(BIBI_Res, "BIBI_Res.RDS")
 ```
 ## Model visualization
-```{r model summary, echo = TRUE, eval = TRUE}
-summary(BIBIExpl)
+```{r model summary, echo = FALSE, eval = TRUE}
+readRDS("BIBISummary.rds")
 ```
 
 ```{r effect plots, echo = TRUE}
 BIBI_res <- readRDS("BIBI_Res.RDS")
 
-plot_main_effect(BIBI_Res, "Forest")
 plot_main_effect(BIBI_Res, "Development")
-plot_main_effect(BIBI_Res, "Barren")
+plot_main_effect(BIBI_Res, "BioregUpstream2")
 plot_main_effect(BIBI_Res, "upstream.total_precip")
 
 plot_inter_effect(BIBI_Res, "Development", "Agriculture", interpolate = TRUE)
