@@ -137,7 +137,8 @@ onam <- function(formula,
     model_list_pho,
     call = match.call(),
     w_post_ensemble = list(w_post_ensemble),
-    outputs_post_ensemble = list(outputs_post_ensemble)
+    outputs_post_ensemble = list(outputs_post_ensemble),
+    y = y
   )
   class(out) <- "onam"
   out
@@ -190,9 +191,9 @@ summary.onam <- function(object, ...) {
   convergence_metric <-
     if (object$model_info$target == "continuous") {
       stats::cor(total_pred,
-                 object$data[, as.character(object$model_info$outcome)])
+                 object$y)
     } else {
-      pROC::auc(object$data[, as.character(object$model_info$outcome)],
+      pROC::auc(object$y,
                 total_pred)
     }
   res <- list(

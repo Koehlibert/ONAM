@@ -8,15 +8,14 @@ library(ONAM)
 #Hyperparameters####
 nSim <- 10
 p <- 10
-n_Big <- 10000
 p_inf <- 3
 n_inter <- factorial(p_inf) / (2 * factorial(p_inf - 2))
 nVals <- c(2000, 5000)
 Effects <- c(1, 2, 3)
 simSetting <- expand.grid(nVals, Effects)
 #Run Simulation####
-# for (i_setting in 1:nrow(simSetting))
-for (i_setting in 2:nrow(simSetting)) {
+for (i_setting in 1:nrow(simSetting)) {
+  # for (i_setting in 2:nrow(simSetting)) {
   #Simulation setting####
   n <- simSetting[i_setting, 1]
   nonLinFIdx <- 3 * (simSetting[i_setting, 2] - 1) + 1:3
