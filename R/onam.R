@@ -138,7 +138,7 @@ onam <- function(formula,
     call = match.call(),
     w_post_ensemble = list(w_post_ensemble),
     outputs_post_ensemble = list(outputs_post_ensemble),
-    y = y
+    y = list(y)
   )
   class(out) <- "onam"
   out
@@ -193,8 +193,10 @@ summary.onam <- function(object, ...) {
       stats::cor(total_pred,
                  object$y)
     } else {
-      pROC::auc(object$y,
-                total_pred)
+      # pROC::auc(object$y,
+      #           total_pred)
+      stats::cor(total_pred,
+                 object$y, method = "spearman")
     }
   res <- list(
     call = object$call,
@@ -229,7 +231,10 @@ print.summary.onam <- function(x, ...) {
         round(x$conv_metric, 4),
         sep = "")
   } else {
-    cat("\nPrediction AUC: ",
+    # cat("\nPrediction AUC: ",
+    #     round(x$conv_metric, 4),
+    #     sep = "")
+    cat("\nCorrelation of onam probabilities with original model predicted probabilities: ",
         round(x$conv_metric, 4),
         sep = "")
   }

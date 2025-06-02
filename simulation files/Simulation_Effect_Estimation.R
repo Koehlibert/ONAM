@@ -16,39 +16,43 @@ library(dplyr)
 library(ONAM)
 library(bench)
 #Hyperparameters####
-nSim <- 10
+n_sim <- 10
 p <- 10
 p_inf <- 3
 n_inter <- factorial(p_inf) / (2 * factorial(p_inf - 2))
-nVals <- c(2000, 5000)
+n_vals <- c(2000, 5000)
 Effects <- c(1, 2, 3)
-simSetting <- expand.grid(nVals, Effects)
+sim_setting <- expand.grid(n_vals, Effects)
 sim_setting <-
-  sim_setting[rep(seq_len(nrow(sim_setting)), each = n_sim), ]
+  sim_setting[rep(seq_len(nrow(sim_setting)), each = n_sim),]
+sim_setting <- cbind(sim_setting, 1:n_sim)
 sim <- function(i) {
   library(MASS)
   library(dplyr)
   library(ONAM)
-  nSim <- 10
+  setwd("/home/koehler/IML")
+  n_sim <- 10
   p <- 10
   p_inf <- 3
   n_inter <- factorial(p_inf) / (2 * factorial(p_inf - 2))
-  nVals <- c(2000, 5000)
+  n_vals <- c(2000, 5000)
   Effects <- c(1, 2, 3)
-  simSetting <- expand.grid(nVals, Effects)
+  sim_setting <- expand.grid(n_vals, Effects)
   sim_setting <-
-    sim_setting[rep(seq_len(nrow(sim_setting)), each = n_sim), ]
+    sim_setting[rep(seq_len(nrow(sim_setting)), each = n_sim),]
+  sim_setting <- cbind(sim_setting, 1:n_sim)
+  j <- sim_setting[i, 3]
   n <- sim_setting[i, 1]
-  nonLinFIdx <- 3 * (simSetting[i_setting, 2] - 1) + 1:3
-  interFIdx <- 3 * (simSetting[i_setting, 2] - 1) + 1:3
+  nonLinFIdx <- 3 * (sim_setting[i, 2] - 1) + 1:3
+  interFIdx <- 3 * (sim_setting[i, 2] - 1) + 1:3
   trueFileName <-
     paste("./UniformFeatureResults/",
-          (i_setting + 1) %/% 2,
+          sim_setting[i, 2],
           "_TRUE.RDS",
           sep = "")
   trueData <- readRDS(trueFileName)
   tmp <- trueData[[j]][[as.character(n)]]
-  X_Big <- trueData[[nSim + 1]]$data
+  X_Big <- trueData[[n_sim + 1]]$data
   rm(trueDat)
   originalData <- tmp$data
   #Generate data####
@@ -80,9 +84,9 @@ sim <- function(i) {
     )
   list_of_deep_models =
     list(deep_model = ONAM:::get_submodel)
-  callback <-
-    keras::keras$callbacks$EarlyStopping(monitor = "loss",
-                                         patience = 10)
+  # callback <-
+  #   keras::keras$callbacks$EarlyStopping(monitor = "loss",
+  #                                        patience = 10)
   modelRunTime <-
     system.time({
       modelRes <-
@@ -91,10 +95,10 @@ sim <- function(i) {
           list_of_deep_models,
           originalData,
           n_ensemble = 4,
-          epochs = 200,
-          callback = callback,
+          epochs = 300,
+          # callback = callback,
           progresstext = FALSE,
-          verbose = 1
+          verbose = 0
         )
     })
   modelEvalData <-
@@ -124,9 +128,9 @@ ids <-
 submitJobs(
   ids,
   res = list(
-    memory = 10000,
+    memory = 25000,
     partition = "batch",
-    walltime = 10000
+    walltime = 25000
   ),
   reg = reg
 )

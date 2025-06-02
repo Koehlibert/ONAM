@@ -1,0 +1,275 @@
+---
+output: 
+  pdf_document:
+    fig_width: 4
+    fig_height: 3
+header-includes:
+  - \pagestyle{empty}
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+This file will give a brief tutorial on how to install and use the ONAM package.  
+
+## Install package:
+```{r install onam, eval = FALSE}
+install.packages("devtools")  
+library(devtools)  
+devtools::install_github("Koehlibert/ONAM")
+```
+If this is the first time using Keras or TensorFlow in R, you need to run `keras::install_keras()`.
+
+The following packages are required for data examples, visualization and machine learning models used for demonstration:
+
+```{r library calls}
+library(ONAM)
+library(mlbench)
+library(MASS)
+library(gbm)
+library(e1071)
+library(caret)
+library(xgboost)
+library(dplyr)
+```
+
+We demonstrate the algorithm by explaining a gradient boosting machine for probability prediction of diabetes, and a xgboost model for prediction of housing prices using the boston housing dataset.
+
+Model specification, evaluation and visualization will be demonstrated.
+
+\newpage
+
+# Binary classification gradient boosting machine for diabetes prediction
+The Pima Indians Diabetes Database is a dataset from the Indian National Institute of Diabetes and Digestive and Kidney Dieseases. 
+https://www.mdpi.com/2076-3417/9/21/4604
+
+```{r load diabetes data}
+data(PimaIndiansDiabetes)
+diabetes_data <- PimaIndiansDiabetes %>%
+  mutate(diabetes = ifelse(diabetes == "pos", 1, 0)) %>%
+  mutate(across(!diabetes, as.numeric)) %>%
+  filter(mass > 0)
+
+head(diabetes_data)
+```
+
+It consists of `r nrow(diabetes_data)` instances of multiple medical features and the diabetes status of each observation. There are `r sum(diabetes_data$diabetes == 1)` diabetes cases and `r sum(diabetes_data$diabetes == 0)` controls in the dataset.
+
+We demonstrate how to use ONAM to explain the prediction of a gradient boosting machine for prediction of the diabetes status.
+
+First, we fit a gradient boosting machine for prediction of diabtetes probability.
+
+```{r Diabetes gbm, echo = TRUE}
+# Train the GBM model (binary classification)
+gbm_model <- gbm(diabetes ~ .,
+                 data = diabetes_data,
+                 distribution = "bernoulli",  
+                 n.trees = 500,               
+                 interaction.depth = 3,       
+                 shrinkage = 0.01,           
+                 cv.folds = 5) 
+summary(gbm_model, plotit = F)
+```
+
+\newpage
+
+Model performance:
+
+```{r gbm performance, echo = FALSE}
+predicted_status <- predict(gbm_model, diabetes_data, n.trees = 500)
+caret::confusionMatrix(factor(as.numeric(predicted_status > 0.5)), 
+                       factor(diabetes_data$diabetes))
+```
+
+\newpage
+
+## Fit ONAM model on gbm data
+
+We explain the svm using the orthogonal additive model framework for binary classification:
+
+```{r diabetes onam model, echo = TRUE, results = "hide", eval = FALSE}
+Diabetes_formula <- diabetes ~ mod(glucose) + mod(insulin) +
+  mod(pregnant) + mod(pressure) + mod(triceps) +
+  mod(pedigree) + mod(mass) + mod(age) + 
+  mod(glucose, insulin) + mod(age, mass) + mod(.)
+list_of_mods_Diabetes <- list(mod = ONAM:::get_submodel)
+gbm_expl <- onam(
+  Diabetes_formula,
+  list_of_deep_models_Diabetes,
+  diabetes_data,
+  gbm_model,
+  prediction_function = function(model, data) {
+    predict(model, data, n.trees = 500, type = "response")
+  },
+  target = "binary",
+  n_ensemble = 20,
+  progresstext = TRUE,
+  epochs = 500,
+  verbose = 0
+)
+
+#generate prediction object for saving
+gbm_res <- predict(gbm_expl)
+saveRDS(gbm_res, "gbm_res.RDS")
+
+```
+
+```{r diabetes model summary, echo = FALSE, eval = TRUE}
+readRDS("diabetes_summary.rds")
+```
+
+```{r gbm diabetes plots, echo = FALSE}
+gbm_res <- readRDS("gbm_res.RDS")
+```
+
+\newpage
+
+### Example of effect plots
+
+The shown effects are on the logit scale.
+
+A higher plasma glucose concentration is associated with a higher risk of diabetes:
+
+```{r pregnancy effect}
+plot_main_effect(gbm_res, "glucose")
+```
+
+A higher BMI is associated with a higher risk of diabetes, but the increase is lower in younger people.
+
+```{r mass age effect, eval=FALSE}
+plot_main_effect(gbm_res, "mass") + xlab("BMI")
+
+plot_inter_effect(gbm_res, "age", "mass", interpolate = FALSE) +
+    xlab("BMI") + ylab("Age")
+```
+
+```{r hidden plot library, echo = FALSE}
+library(ggpubr)
+library(ggplot2)
+```
+
+
+```{r mass age effect combined, echo = FALSE, fig.width=7}
+ggarrange(
+  plot_main_effect(gbm_res, "mass") + xlab("BMI"),
+  plot_inter_effect(gbm_res, "age", "mass",
+                    interpolate = FALSE) +
+    xlab("BMI") + ylab("Age") +
+    theme(legend.position = "right"),
+  ncol = 2,
+  widths = c(0.35, 0.65)
+) 
+```
+
+
+\newpage
+
+# Prediction of Boston housing prices using xgboost
+
+The `r "Boston"` dataset contains data collected by the US Census Service on socioecological features of housing in Boston, MA. It contains 13 features along with the median value of owner-occupied homes, which will be the outcome in this section.
+
+```{r load Boston data}
+data("Boston")
+
+head(Boston)
+```
+
+The dataset contains information `r nrow(Boston)` towns. We use xgboost to fit a prediction model for median housing prices per town.
+
+```{r fit xgboost model}
+train_Boston <- Boston %>% dplyr::select(-medv)
+label_Boston <- Boston %>% dplyr::select(medv) %>% unlist()
+
+xgb_train_Boston <- xgb.DMatrix(as.matrix(train_Boston),
+                                   label = label_Boston)
+
+xgb_mod <-
+  xgboost(
+    xgb_train_Boston,
+    nrounds = 10000,
+    verbose = 0,
+    objective = "reg:squarederror",
+    eval_metric = "rmse"
+  )
+summary(xgb_mod)
+
+preds <- predict(xgb_mod, xgb_train_Boston)
+pricing_cor <- cor(preds, Boston$medv)
+```
+
+Correlation between housing prices and predictions: `r round(pricing_cor, 4)`
+
+## Fit ONAM model on xgboost data
+
+We explain the xgboost using the orthogonal additive model framework:
+
+```{r onam insurance, echo = TRUE, echo = TRUE, results = "hide", eval = FALSE}
+Boston_formula <-
+  medv ~ mod(crim) + mod(zn) + mod(indus) + mod(chas) +
+  mod(nox) + mod(rm) + mod(age) + mod(dis) + mod(rad) +
+  mod(tax) + mod(ptratio) + mod(black) + mod(lstat) +
+  mod(crim, dis) + mod(rm, age) + mod(zn, indus) +
+  mod(.)
+
+list_of_deep_models_Boston <- list(mod = ONAM:::get_submodel)
+
+categorical_features <- c("chas")
+
+xgb_expl <-
+  onam(
+    Boston_formula,
+    list_of_deep_models_Boston,
+    Boston,
+    # target = "binary",
+    model = xgb_mod,
+    model_data = xgb_train_Boston,
+    categorical_features = categorical_features,
+    n_ensemble = 20,
+    epochs = 1000,
+    progresstext = TRUE,
+    verbose = 0
+  )
+
+xgb_res <- predict(xgb_expl)
+saveRDS(xgb_res, "xgb_res.RDS")
+```
+
+```{r xgb summary Boston, echo=FALSE}
+readRDS("xgb_summary.rds")
+```
+
+```{r load and plot xgb onam model, echo=FALSE}
+xgb_res <- readRDS("xgb_res.RDS")
+```
+
+### Examples of effect plots
+
+Higher crime rate is associated with lower housing prices
+
+```{r crime effect}
+plot_main_effect(xgb_res, "crim") + xlab("Crime rate (%)")
+```
+
+Lower number of rooms is associated with lower housing prices, but less so in (areas with) older houses.
+
+```{r room effect, eval = FALSE}
+plot_main_effect(xgb_res, "rm") + xlab("Av. number of rooms per dwelling")
+plot_inter_effect(xgb_res, "rm", "age") + 
+  xlab("Av. number of rooms per dwelling") + 
+  ylab("% of units build prior to 1940")
+```
+
+```{r room effect combined, echo = FALSE, fig.width=7}
+ggarrange(
+  plot_main_effect(xgb_res, "rm") +
+    xlab("Av. number of rooms per dwelling"),
+  plot_inter_effect(xgb_res, "rm", "age") +
+    xlab("Av. number of rooms per dwelling") +
+    ylab("% of units build prior to 1940") +
+    theme(legend.position = "right"),
+  ncol = 2,
+  widths = c(0.35, 0.65)
+)
+```
+

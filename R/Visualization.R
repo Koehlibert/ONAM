@@ -38,7 +38,7 @@ plot_main_effect <- function(object, effect) {
       data.frame(x = object$data[, effect],
                  y = object$outputs_post_ensemble[, effect])
   }
-  if (effect %in% object$categorical_features) {
+  if (effect %in% object$model_info$categorical_features) {
     plt <- plot_main_categorical(data_plot)
   } else {
     plt <- ggplot2::ggplot(data_plot, ggplot2::aes(x = x, y = y)) +
