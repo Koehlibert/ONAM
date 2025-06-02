@@ -528,7 +528,7 @@ ggsave(
   big_plot_n_main_5000,
   device = "png",
   width = 9,
-  height = 10, useDingbats = TRUE
+  height = 10
 )
 plot_list_inter_extra <- list(
   A = ggplot(),
@@ -633,7 +633,7 @@ setting_2000_all <-
 ggsave("sim_inter_n_2000.png",
        setting_2000_all,
        width = 15,
-       height = 10, useDingbats = TRUE)
+       height = 10)
 
 plots_inter_5000_l <- lapply(1:9, function(idx) {
   plot_list_inter[[2]][[2 * idx]] %>% get_legend() %>% as_ggplot()
@@ -686,7 +686,7 @@ setting_5000_all <-
 ggsave("sim_inter_n_5000.png",
        setting_5000_all,
        width = 15,
-       height = 10, useDingbats = TRUE)
+       height = 10)
 # big_plot_n_inter_2000 <-
 #   ggarrange(plotlist = plot_list_inter[[1]],
 #             ncol = 2,
@@ -720,3 +720,4 @@ ggsave("sim_inter_n_5000.png",
 #   ggarrange(plotlist = plot_list_inter[[1]],
 #             ncol = 2,
 #             nrow = 9)
+

@@ -16,26 +16,27 @@ library(dplyr)
 library(ONAM)
 library(bench)
 n_sim <- 50
-p_vals <- c(10, 25, 50, 100)
-p_inf_vals <- c(3, 10, 20, 50)
+p_vals <- c(10, 25, 40, 80)
+p_inf_vals <- c(3, 10, 20, 40)
 n_inter_vals <- p_inf_vals
-n_vals <- c(2000, 5000, 10000)
+n_vals <- c(2000, 5000)
 sim_setting <- expand.grid(n_vals, 1:length(p_vals))
 sim_setting <-
-  sim_setting[rep(seq_len(nrow(sim_setting)), each = n_sim), ]
+  sim_setting[rep(seq_len(nrow(sim_setting)), each = n_sim),]
 sim <- function(i) {
+  gc()
   library(MASS)
   library(dplyr)
   library(ONAM)
   library(bench)
-  n_sim <- 100
-  p_vals <- c(10, 25, 50, 100)
-  p_inf_vals <- c(3, 10, 20, 50)
+  n_sim <- 50
+  p_vals <- c(10, 25, 40, 80)
+  p_inf_vals <- c(3, 10, 20, 40)
   n_inter_vals <- p_inf_vals
-  n_vals <- c(2000, 5000, 10000)
+  n_vals <- c(2000, 5000)
   sim_setting <- expand.grid(n_vals, 1:length(p_vals))
   sim_setting <-
-    sim_setting[rep(seq_len(nrow(sim_setting)), each = n_sim), ]
+    sim_setting[rep(seq_len(nrow(sim_setting)), each = n_sim),]
   lotf <- list(function(x)
     cos(2 * x),
     function(x)
@@ -89,19 +90,18 @@ sim <- function(i) {
   X <- (pnorm(Z) - 0.5) * 6
   rm(Z)
   Y <- 0
-  set.seed(i %/% n_sim)
+  set.seed(p)
   for (i_p in 1:p_inf) {
     Y <- Y + lotf[[sample(seq_along(lotf), 1)]](X[, i_p])
   }
   pairs <- expand.grid(1:p, 1:p)
-  pairs <- pairs[which(pairs[, 1] < pairs[, 2]), ]
+  pairs <- pairs[which(pairs[, 1] < pairs[, 2]),]
   inter_rows <- sample((1:nrow(pairs)), n_inter)
   chosen_pairs <- matrix(nrow = 0, ncol = 2)
   for (i_p_int in 1:n_inter) {
     x1 <- pairs[inter_rows[i_p_int], 1]
     x2 <- pairs[inter_rows[i_p_int], 2]
-    chosen_pairs <-
-      rbind(chosen_pairs, pairs[inter_rows[i_p_int],])
+    chosen_pairs <- rbind(chosen_pairs, pairs[inter_rows[i_p_int], ])
     Y <-
       Y + interf[[sample(seq_along(interf), 1)]](X[, x1], X[, x2])
   }
@@ -119,33 +119,32 @@ sim <- function(i) {
     list(mod = ONAM:::get_submodel)
   runtime <-
     system.time({
-      model <-
-        onam(
-          formula,
-          list_of_deep_models,
-          train_data,
-          n_ensemble = 1,
-          epochs = 500,
-          progresstext = FALSE,
-          verbose = 0
-        )
-    })
-  c(n, p_inf, runtime)
+      onam(
+        formula,
+        list_of_deep_models,
+        train_data,
+        n_ensemble = 1,
+        epochs = 500,
+        progresstext = FALSE,
+        verbose = 0
+      )})
+  c(n, p_inf,
+    runtime)
 }
 
 reg <- makeRegistry(file.dir = paste0("/home/koehler/IML/results"))
 
 ids <-
   batchMap(fun = sim,
-           args = list(i = 1:nrow(sim_setting)),
+           args = list(i = 1:nrow(simSetting)),
            reg = reg)
 
 submitJobs(
   ids,
   res = list(
-    memory = 10000,
+    memory = 100000,
     partition = "batch",
-    walltime = 10000
+    walltime = 50000
   ),
   reg = reg
 )
