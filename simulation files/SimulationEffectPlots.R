@@ -518,6 +518,7 @@ ggsave(
   device = "png",
   width = 9,
   height = 10,
+  bg = "transparent"
 )
 big_plot_n_main_5000 <-
   wrap_plots(plot_list_main[[2]], guides = "collect",
@@ -528,7 +529,8 @@ ggsave(
   big_plot_n_main_5000,
   device = "png",
   width = 9,
-  height = 10
+  height = 10,
+  bg = "transparent"
 )
 plot_list_inter_extra <- list(
   A = ggplot(),
@@ -630,10 +632,11 @@ setting_2000_all <-
                       widths = c(0.4, 1, 0.4),
                       ncol = 3),
             nrow = 2)
-ggsave("sim_inter_n_2000.png",
+ggsave("sim_inter_n_2000.pdf",
        setting_2000_all,
        width = 15,
-       height = 10)
+       height = 12,
+       bg = "transparent")
 
 plots_inter_5000_l <- lapply(1:9, function(idx) {
   plot_list_inter[[2]][[2 * idx]] %>% get_legend() %>% as_ggplot()
@@ -683,10 +686,11 @@ setting_5000_all <-
                       widths = c(0.4, 1, 0.4),
                       ncol = 3),
             nrow = 2)
-ggsave("sim_inter_n_5000.png",
+ggsave("sim_inter_n_5000.pdf",
        setting_5000_all,
        width = 15,
-       height = 10)
+       height = 12,
+       bg = "transparent")
 # big_plot_n_inter_2000 <-
 #   ggarrange(plotlist = plot_list_inter[[1]],
 #             ncol = 2,
