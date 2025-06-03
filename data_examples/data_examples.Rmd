@@ -251,6 +251,8 @@ readRDS("xgb_summary.rds")
 xgb_res <- readRDS("xgb_res.RDS")
 ```
 
+\newpage
+
 ### Visualization
 
 Higher crime rate is associated with lower housing prices:
