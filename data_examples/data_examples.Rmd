@@ -90,7 +90,7 @@ caret::confusionMatrix(factor(as.numeric(predicted_status > 0.5)),
 ## Fit ONAM model to decompose gbm predictions
 
 We illustrate the use of the proposed algorithm by decomposing the predictions
-of the fitted gbm model:
+of the fitted gbm model. By setting the `r "target"` parameter to `r "binary"`, a sigmoid activation function is applied to the last layer of the model, enabling the fitting of probability outcomes.
 
 ```{r diabetes onam model, echo = TRUE, results = "hide", eval = FALSE}
 Diabetes_formula <- diabetes ~ mod(glucose) + mod(insulin) +
@@ -102,12 +102,12 @@ gbm_expl <- onam(
   Diabetes_formula,
   list_of_deep_models_Diabetes,
   diabetes_data,
-  gbm_model,
+  model = gbm_model,
   prediction_function = function(model, data) {
     predict(model, data, n.trees = 500, type = "response")
   },
-  target = "binary",
-  n_ensemble = 20,
+  target = "binary", #use sigmoid activation in last layer
+  n_ensemble = 10,
   progresstext = TRUE,
   epochs = 500,
   verbose = 0
@@ -120,6 +120,7 @@ saveRDS(gbm_res, "gbm_res.RDS")
 ```
 
 ```{r diabetes model summary, echo = FALSE, eval = TRUE}
+#Model building takes a lot of time, so we use pre-fitted models for knitting the pdf. To rerun the models, set eval=TRUE in ONAM fitting code chunks.
 readRDS("diabetes_summary.rds")
 ```
 
@@ -229,7 +230,6 @@ xgb_expl <-
     Boston_formula,
     list_of_deep_models_Boston,
     Boston,
-    # target = "binary",
     model = xgb_mod,
     model_data = xgb_train_Boston,
     categorical_features = categorical_features,
