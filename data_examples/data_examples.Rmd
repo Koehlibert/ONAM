@@ -40,7 +40,7 @@ results of an XGBoost model for the prediction of housing prices.
 
 \newpage
 
-# Gradient boosting machine for the prediction of diabetes risk using the Pima Indians Diabetes Database
+# Gradient boosting machine for the prediction of diabetes risk using the Salt River Pima-Maricopa Indian Community of the Salt River Reservation, Arizona Diabetes Database
 
 Load the data:
 
