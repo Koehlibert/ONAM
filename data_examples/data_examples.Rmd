@@ -36,7 +36,7 @@ library(dplyr)
 
 We demonstrate the use of the proposed algorithm by decomposing (i) the results
 of a gradient boosting machine for the prediction of diabetes risk and (ii) the
-results of an XGBoost model for the prediction of housing prices.
+results of an XGBoost\footnote[2]{\textcolor{red}{T. Chen, C. Guestrin, XGBoost: A scalable tree boosting system. in Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD ’16) (eds, B. Krishnapuram et al.) (Association for Computing Machinery, New York, 2016), 785–794.\newline\newline\newline\newline\newline\newline}} model for the prediction of housing prices.
 
 \newpage
 
