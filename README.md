@@ -1,5 +1,7 @@
 # Orthogonal neural additive models for interpretable machine learning by functional decomposition of black-box models into explainable predictor effects
 
+**This repository contains the software code for https://www.nature.com/articles/s44387-025-00033-7 as used at the point of submission. For the current version of the R-package, see https://github.com/Koehlibert/ONAM_R**
+
 ## Install package:
 ``` r
 install.packages("devtools")  
